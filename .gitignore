@@ -1,0 +1,48 @@
+Set-Content .gitignore -Value @'
+# Виртуальное окружение
+.venv/
+venv/
+ENV/
+
+# Чекпоинты, веса моделей и логи обучения
+outputs_poker_gemma/
+poker_gemma3_demo_lora/
+unsloth_compiled_cache/
+poker_gemma3_lora/
+poker_gemma3_demo_lora/
+poker_gemma_lora/
+outputs_poker_gemma/
+__pycache__/
+poker_gemma3_merged/
+1786073807.png
+data_test.jsonl
+data_train.jsonl
+*.safetensors
+*.pt
+*.bin
+*.pkl
+
+# Кэш Python
+__pycache__/
+*.pyc
+'@
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+unsloth_compiled_cache/
+poker_gemma3_lora/
+poker_gemma3_demo_lora/
+poker_gemma_lora/
+outputs_poker_gemma/
+__pycache__/
+poker_gemma3_merged/
+1786073807.png
+data_test.jsonl
+data_train.jsonl
