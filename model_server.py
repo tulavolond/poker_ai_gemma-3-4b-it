@@ -56,7 +56,7 @@ model = AutoModelForCausalLM.from_pretrained(
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=HF_TOKEN)
 
-USE_LORA = False
+USE_LORA = True #*********************************************************Важно**************
 if USE_LORA and os.path.exists(LORA_PATH):
     from peft import PeftModel
     model = PeftModel.from_pretrained(model, LORA_PATH)
@@ -168,7 +168,7 @@ def _quick_test():
         print("  3. Слишком мало VRAM, слои ушли на CPU")
         print("  Модель работает, но ответы будут пустыми.")
     else:
-        print("  ✅ Модель генерирует текст — сервер готов к работе.")
+        print(f"  ✅ Модель генерирует текст\n{text}\n— сервер готов к работе.")
     print("=" * 60 + "\n")
 
 

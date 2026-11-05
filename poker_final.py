@@ -652,7 +652,7 @@ class PokerGame:
                 if p.is_human():
                     parts.append(f"👤 {p.name}: {p.cards[0]} {p.cards[1]}")
                 else:
-                    parts.append(f"🤖 {p.name}: 🂠 🂠")
+                    parts.append(f"🤖 {p.name}: 🂠 🂠 {p.cards[0]} {p.cards[1]}")
             print(f"  {'  |  '.join(parts)}", flush=True)
 
         time.sleep(PAUSE_CARDS)
@@ -846,7 +846,7 @@ class PokerGame:
                 if not player.is_human():
                     style_info = f" [{player.style}]"
 
-                if human_folded and not player.is_human():
+                if not human_folded and not player.is_human():
                     cards_info = f" [{player.cards[0]} {player.cards[1]}]"
                 else:
                     cards_info = ""
