@@ -56,7 +56,7 @@ model = AutoModelForCausalLM.from_pretrained(
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=HF_TOKEN)
 
-USE_LORA = True #*********************************************************Важно**************
+USE_LORA = False #*********************************************************Важно**************
 if USE_LORA and os.path.exists(LORA_PATH):
     from peft import PeftModel
     model = PeftModel.from_pretrained(model, LORA_PATH)

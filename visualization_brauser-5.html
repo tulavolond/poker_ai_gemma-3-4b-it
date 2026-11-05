@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Покер: Человек против ИИ</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    min-height: 100vh;
+    padding: 15px;
+    color: #fff;
+}
+
+.container { max-width: 1600px; margin: 0 auto; }
+
+h1 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 2.2em;
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+}
+
+.game-area {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 15px;
+}
+
+.poker-table {
+    background: radial-gradient(ellipse at center, #1a5d1a 0%, #0d3d0d 70%, #072707 100%);
+    border: 25px solid #4a2c17;
+    border-radius: 50% / 45%;
+    aspect-ratio: 2/1;
+    position: relative;
+    box-shadow: 
+        inset 0 0 80px rgba(0,0,0,0.6),
+        0 15px 40px rgba(0,0,0,0.7),
+        0 0 0 8px #2a1810;
+    padding: 50px;
+    min-height: 600px;
+}
+
+.center-info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.pot-display {
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    color: #000;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 1.4em;
+    font-weight: bold;
+    box-shadow: 0 5px 20px rgba(255,215,0,0.5);
+    border: 3px solid #fff;
+}
+
+.community-cards {
+    display: flex;
+    gap: 10px;
+    padding: 12px 20px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 15px;
+    min-height: 100px;
+    align-items: center;
+    justify-content: center;
+}
+
+.stage-display {
+    background: rgba(0,0,0,0.7);
+    padding: 8px 25px;
+    border-radius: 15px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #ffd700;
+    border: 2px solid #ffd700;
+}
+
+.hand-number {
+    background: rgba(0,0,0,0.7);
+    padding: 5px 15px;
+    border-radius: 10px;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+.card {
+    width: 60px;
+    height: 85px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3em;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    transition: box-shadow 0.3s, border 0.3s;
+    border: 2px solid #333;
+    flex-shrink: 0;
+}
+
+.card.hearts, .card.diamonds { color: #d32f2f; }
+.card.spades, .card.clubs { color: #1a1a1a; }
+
+.card.back {
+    background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+    color: white;
+    border: 2px solid #ffd700;
+}
+
+.card.back::before {
+    content: '🂠';
+    font-size: 2em;
+    opacity: 0.8;
+}
+
+.card.highlight {
+    box-shadow: 0 0 25px #ffd700, 0 0 40px #ffd700;
+    border: 3px solid #ffd700;
+    animation: pulseHighlight 1.5s infinite;
+}
+
+@keyframes pulseHighlight {
+    0%, 100% { box-shadow: 0 0 20px #ffd700, 0 0 35px #ffd700; }
+    50% { box-shadow: 0 0 30px #ffd700, 0 0 50px #ffd700; }
+}
+
+/* ============================================================ */
+/* ИГРОКИ - фиксированная сетка без пересоздания                */
+/* ============================================================ */
+
+.player {
+    position: absolute;
+    width: 180px;
+    background: rgba(0,0,0,0.85);
+    border: 3px solid #555;
+    border-radius: 15px;
+    padding: 12px;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    transition: border-color 0.3s, box-shadow 0.3s, opacity 0.3s, filter 0.3s, background 0.3s;
+}
+
+.player.human {
+    border-color: #4caf50;
+    background: rgba(10,50,10,0.9);
+    box-shadow: 0 0 25px rgba(76,175,80,0.5);
+}
+
+.player.active-turn {
+    border-color: #ffd700;
+    box-shadow: 0 0 30px rgba(255,215,0,0.8);
+    z-index: 10;
+}
+
+.player.winner {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, rgba(255,215,0,0.3), rgba(255,140,0,0.3));
+    box-shadow: 0 0 50px rgba(255,215,0,1);
+    animation: winnerPulse 1.5s infinite;
+}
+
+@keyframes winnerPulse {
+    0%, 100% { box-shadow: 0 0 40px rgba(255,215,0,0.8); }
+    50% { box-shadow: 0 0 70px rgba(255,215,0,1); }
+}
+
+.player.folded {
+    opacity: 0.3;
+    filter: grayscale(80%);
+}
+
+.player-name {
+    font-size: 1.05em;
+    font-weight: bold;
+    margin-bottom: 4px;
+    min-height: 1.2em;
+}
+
+.player-stack {
+    font-size: 0.95em;
+    color: #ffd700;
+    font-weight: bold;
+    margin-bottom: 6px;
+    min-height: 1.2em;
+}
+
+.player-cards {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    min-height: 75px;
+    align-items: center;
+}
+
+.player-cards .card {
+    width: 50px;
+    height: 70px;
+    font-size: 0.95em;
+}
+
+.player-hand-name {
+    font-size: 0.85em;
+    color: #4caf50;
+    margin-top: 6px;
+    font-weight: bold;
+    background: rgba(0,0,0,0.5);
+    padding: 3px 8px;
+    border-radius: 8px;
+    min-height: 1.5em;
+    display: none;
+}
+
+.player-hand-name.visible {
+    display: block;
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7em;
+    font-weight: bold;
+    margin-left: 3px;
+    vertical-align: middle;
+}
+
+.badge.dealer { background: #fff; color: #000; }
+.badge.sb { background: #2196f3; color: #fff; }
+.badge.bb { background: #ff5722; color: #fff; }
+
+/* Ставка и облачко — фиксированные слоты, только меняют видимость/текст */
+.player-bet {
+    position: absolute;
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    font-weight: bold;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    border: 2px solid #ffd700;
+    white-space: nowrap;
+    z-index: 8;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.player-bet.hidden {
+    opacity: 0;
+}
+
+.action-bubble {
+    position: absolute;
+    background: rgba(255,255,255,0.95);
+    color: #000;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.8em;
+    font-weight: bold;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    white-space: nowrap;
+    z-index: 9;
+    border: 2px solid #333;
+    transition: opacity 0.3s, background 0.3s, color 0.3s;
+    pointer-events: none;
+}
+
+.action-bubble.hidden { opacity: 0; }
+.action-bubble.fold { background: #ffcdd2; color: #b71c1c; border-color: #b71c1c; }
+.action-bubble.check { background: #bbdefb; color: #0d47a1; border-color: #0d47a1; }
+.action-bubble.call { background: #c8e6c9; color: #1b5e20; border-color: #1b5e20; }
+.action-bubble.raise { background: #fff59d; color: #e65100; border-color: #e65100; }
+.action-bubble.thinking { background: #e1bee7; color: #4a148c; border-color: #4a148c; }
+
+.observer-banner {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #7b1fa2, #512da8);
+    padding: 8px 25px;
+    border-radius: 20px;
+    font-weight: bold;
+    z-index: 20;
+    box-shadow: 0 5px 20px rgba(123,31,162,0.7);
+    border: 2px solid #fff;
+    display: none;
+}
+
+.observer-banner.visible {
+    display: block;
+    animation: observerPulse 2s infinite;
+}
+
+@keyframes observerPulse {
+    0%, 100% { box-shadow: 0 5px 20px rgba(123,31,162,0.7); }
+    50% { box-shadow: 0 5px 30px rgba(123,31,162,1); }
+}
+
+/* ============================================================ */
+/* ПАНЕЛЬ УПРАВЛЕНИЯ                                             */
+/* ============================================================ */
+
+.controls {
+    background: rgba(0,0,0,0.85);
+    border-radius: 15px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 2px solid #444;
+}
+
+.controls h3 {
+    text-align: center;
+    margin-bottom: 8px;
+    color: #ffd700;
+}
+
+.button {
+    padding: 14px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-transform: uppercase;
+    border: 2px solid transparent;
+}
+
+.button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+}
+
+.button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.button.fold { background: #d32f2f; color: white; }
+.button.check { background: #1976d2; color: white; }
+.button.call { background: #388e3c; color: white; }
+.button.raise { background: #f57c00; color: white; }
+
+.raise-input {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.raise-input input {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 1em;
+}
+
+.hand-info {
+    background: rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #444;
+}
+
+.hand-info .strength {
+    font-size: 1.3em;
+    color: #ffd700;
+    margin: 4px 0;
+    font-weight: bold;
+    min-height: 1.4em;
+}
+
+.hand-info .desc {
+    font-size: 0.9em;
+    color: #ccc;
+    margin-top: 4px;
+    min-height: 1.2em;
+}
+
+/* ============================================================ */
+/* ЛОГ И НАСТРОЙКИ                                              */
+/* ============================================================ */
+
+.log-panel {
+    background: rgba(0,0,0,0.85);
+    border-radius: 15px;
+    padding: 15px;
+    max-height: 280px;
+    overflow-y: auto;
+    margin-top: 15px;
+    border: 2px solid #444;
+}
+
+.log-panel h3 { margin-bottom: 8px; color: #ffd700; }
+
+.log-entry {
+    padding: 6px 10px;
+    margin: 4px 0;
+    border-left: 4px solid #ffd700;
+    padding-left: 12px;
+    font-size: 0.9em;
+    border-radius: 0 6px 6px 0;
+    background: rgba(255,255,255,0.03);
+}
+
+.log-entry.error { border-left-color: #f44336; background: rgba(244,67,54,0.1); }
+.log-entry.info { border-left-color: #2196f3; background: rgba(33,150,243,0.1); }
+.log-entry.win { border-left-color: #4caf50; background: rgba(76,175,80,0.15); font-weight: bold; }
+.log-entry.llm { border-left-color: #ab47bc; background: rgba(171,71,188,0.1); }
+
+.settings {
+    background: rgba(0,0,0,0.85);
+    border-radius: 15px;
+    padding: 18px;
+    margin-bottom: 15px;
+    border: 2px solid #444;
+}
+
+.settings h3 { margin-bottom: 10px; color: #ffd700; }
+
+.settings input {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.settings label {
+    font-size: 0.9em;
+    margin-top: 8px;
+    display: block;
+}
+
+.settings .note {
+    font-size: 0.82em;
+    color: #ffab91;
+    margin: 10px 0;
+    padding: 10px;
+    background: rgba(255,87,34,0.1);
+    border-radius: 8px;
+    border-left: 3px solid #ff5722;
+}
+
+.legend {
+    background: rgba(0,0,0,0.85);
+    border-radius: 15px;
+    padding: 12px;
+    margin-top: 10px;
+    border: 2px solid #444;
+    font-size: 0.85em;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 5px 0;
+}
+
+/* Showdown banner */
+.showdown-banner {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+    padding: 40px 60px;
+    border-radius: 25px;
+    border: 6px solid #ffd700;
+    z-index: 1000;
+    text-align: center;
+    animation: bannerSlide 0.6s;
+    box-shadow: 0 0 150px rgba(255,215,0,0.6);
+    max-width: 90vw;
+    display: none;
+}
+
+.showdown-banner.visible {
+    display: block;
+}
+
+@keyframes bannerSlide {
+    from { opacity: 0; transform: translate(-50%, -70%); }
+    to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.showdown-banner h2 {
+    font-size: 2.2em;
+    color: #ffd700;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(255,215,0,0.7);
+}
+
+.showdown-banner .info-row {
+    font-size: 1.3em;
+    margin: 12px 0;
+}
+
+.showdown-banner .hand-name {
+    font-size: 1.8em;
+    color: #4caf50;
+    font-weight: bold;
+    margin: 15px 0;
+    text-shadow: 0 0 15px rgba(76,175,80,0.5);
+}
+
+.showdown-banner .cards-preview {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.showdown-banner .cards-preview .card {
+    width: 70px;
+    height: 100px;
+    font-size: 1.5em;
+    box-shadow: 0 0 30px rgba(255,215,0,0.8);
+    border: 3px solid #ffd700;
+}
+
+.showdown-banner .timer {
+    margin-top: 20px;
+    font-size: 1em;
+    color: #aaa;
+}
+
+@media (max-width: 1200px) {
+    .game-area { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>🎰 Покер: Человек против ИИ</h1>
+
+    <div class="settings">
+        <h3>⚙️ Настройки</h3>
+        <label>Количество ИИ (1-8):</label>
+        <input type="number" id="aiCount" min="1" max="8" value="5">
+        <label>URL сервера LLM:</label>
+        <input type="text" id="serverUrl" value="http://192.168.1.103:8899">
+        <div class="note">
+            💡 <strong>Важно:</strong> Сервер должен иметь CORS-заголовки. При ошибке CORS игра автоматически переключится на локальную логику ИИ.
+        </div>
+        <button class="button call" onclick="startGame()">🎮 Начать игру</button>
+    </div>
+
+    <div class="game-area">
+        <div class="poker-table" id="pokerTable">
+            <div class="observer-banner" id="observerBanner">👁️ Режим наблюдателя — карты ИИ открыты</div>
+            <div class="center-info">
+                <div class="hand-number" id="handNumber">Раздача #0</div>
+                <div class="pot-display" id="potDisplay">Банк: $0</div>
+                <div class="community-cards" id="communityCards"></div>
+                <div class="stage-display" id="stageDisplay">Префлоп</div>
+            </div>
+            <!-- Слоты для игроков создаются динамически один раз -->
+        </div>
+
+        <div class="controls">
+            <h3>🎯 Твой ход</h3>
+            <div class="hand-info">
+                <div>📊 Твоя рука:</div>
+                <div class="strength" id="handStrength">—</div>
+                <div class="desc" id="handDescription">Ожидание...</div>
+            </div>
+            <div class="raise-input">
+                <input type="number" id="raiseAmount" placeholder="Сумма рейза">
+            </div>
+            <button class="button fold" id="foldBtn" onclick="playerAction('fold')" disabled>👎 Фолд</button>
+            <button class="button check" id="checkBtn" onclick="playerAction('check')" disabled>✋ Чек</button>
+            <button class="button call" id="callBtn" onclick="playerAction('call')" disabled>✅ Колл</button>
+            <button class="button raise" id="raiseBtn" onclick="playerAction('raise')" disabled>🔥 Рейз</button>
+
+            <div class="legend">
+                <strong>📖 Легенда:</strong>
+                <div class="legend-item"><span class="badge dealer">D</span> Дилер</div>
+                <div class="legend-item"><span class="badge sb">SB</span> Малый блайнд</div>
+                <div class="legend-item"><span class="badge bb">BB</span> Большой блайнд</div>
+                <div class="legend-item">💭 Облачко = последнее действие</div>
+                <div class="legend-item">💰 Фишка = текущая ставка</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="log-panel">
+        <h3>📜 История действий</h3>
+        <div id="logContainer"></div>
+    </div>
+</div>
+
+<!-- Баннер результата (скрыт по умолчанию) -->
+<div class="showdown-banner" id="showdownBanner"></div>
+
+<script>
+// ============================================================
+// КОНСТАНТЫ СКОРОСТИ
+// ============================================================
+const DELAY_AI_THINK   = 3000;   // 3 сек "думает" перед ходом ИИ
+const DELAY_AI_ACTION  = 1200;   // пауза после действия ИИ
+const DELAY_HUMAN      = 500;    // пауза после хода человека
+const DELAY_STAGE      = 1200;   // пауза между стадиями
+const DELAY_SHOWDOWN   = 15000;  // 15 сек на просмотр результата
+const DELAY_NEXT_HAND  = 2000;   // пауза между раздачами
+const LLM_TIMEOUT      = 30000;  // таймаут LLM-запроса (30 сек)
+
+const SB = 5, BB = 10, START = 1000;
+
+// ============================================================
+// КАРТЫ И КОЛОДА
+// ============================================================
+
+class Card {
+    constructor(rank, suit) {
+        this.rank = rank;
+        this.suit = suit;
+        this.id = `${rank}${suit}`;
+    }
+    toString() {
+        const names = {11:'J',12:'Q',13:'K',14:'A'};
+        return `${names[this.rank]||this.rank}${this.suit}`;
+    }
+    getSuitClass() {
+        return {'♠':'spades','♥':'hearts','♦':'diamonds','♣':'clubs'}[this.suit];
+    }
+}
+
+class Deck {
+    constructor() { this.cards = []; this.reset(); }
+    reset() {
+        this.cards = [];
+        for (let r = 2; r <= 14; r++)
+            for (let s of ['♠','♥','♦','♣'])
+                this.cards.push(new Card(r, s));
+        this.shuffle();
+    }
+    shuffle() {
+        for (let i = this.cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+        }
+    }
+    deal(n = 1) { return this.cards.splice(-n, n); }
+}
+
+// ============================================================
+// ОЦЕНЩИК РУК
+// ============================================================
+
+class HandEvaluator {
+    static CAT = {
+        8:"Роял-флеш",7:"Стрит-флеш",6:"Каре",
+        5:"Фулл-хаус",4:"Флеш",3:"Стрит",
+        2:"Сет",1:"Две пары",0:"Пара",'-1':"Старшая карта"
+    };
+
+    static evaluate(cards) {
+        let best = null, bestCards = null;
+        const combos = this.combinations(cards, 5);
+        for (let combo of combos) {
+            const score = this.score5(combo);
+            if (best === null || this.cmp(score, best) > 0) {
+                best = score;
+                bestCards = combo;
+            }
+        }
+        return { score: best, cards: bestCards || [] };
+    }
+
+    static combinations(arr, k) {
+        const result = [], combo = [];
+        (function bt(start) {
+            if (combo.length === k) { result.push([...combo]); return; }
+            for (let i = start; i < arr.length; i++) {
+                combo.push(arr[i]);
+                bt(i + 1);
+                combo.pop();
+            }
+        })(0);
+        return result;
+    }
+
+    static score5(cards) {
+        const ranks = cards.map(c => c.rank).sort((a,b) => b-a);
+        const suits = cards.map(c => c.suit);
+        const isFlush = new Set(suits).size === 1;
+        let isStraight = false, straightHigh = 0;
+        const u = [...new Set(ranks)].sort((a,b) => b-a);
+        if (u.length === 5) {
+            if (u[0] - u[4] === 4) { isStraight = true; straightHigh = u[0]; }
+            else if (JSON.stringify(u) === JSON.stringify([14,5,4,3,2])) {
+                isStraight = true; straightHigh = 5;
+            }
+        }
+        const counts = {};
+        ranks.forEach(r => counts[r] = (counts[r]||0) + 1);
+        const cv = Object.values(counts).sort((a,b) => b-a);
+        let cat;
+        if (isFlush && isStraight) cat = straightHigh===14?8:7;
+        else if (cv[0]===4) cat=6;
+        else if (cv[0]===3 && cv[1]===2) cat=5;
+        else if (isFlush) cat=4;
+        else if (isStraight) cat=3;
+        else if (cv[0]===3) cat=2;
+        else if (cv[0]===2 && cv[1]===2) cat=1;
+        else if (cv[0]===2) cat=0;
+        else cat=-1;
+        return [cat, ranks];
+    }
+
+    static cmp(a, b) {
+        if (a[0] !== b[0]) return a[0] - b[0];
+        for (let i = 0; i < Math.min(a[1].length, b[1].length); i++)
+            if (a[1][i] !== b[1][i]) return a[1][i] - b[1][i];
+        return 0;
+    }
+
+    static catName(score) { return this.CAT[score[0]] || "?"; }
+
+    static preflop(cards) {
+        if (cards.length < 2) return 0;
+        const [r1,r2] = [cards[0].rank, cards[1].rank].sort((a,b)=>b-a);
+        const suited = cards[0].suit === cards[1].suit;
+        if (r1 === r2) return Math.min(0.5 + (r1-2)/24, 1);
+        let s = (r1+r2)/28 * 0.4;
+        if (suited) s += 0.1;
+        if (r1-r2 <= 2) s += 0.05;
+        if (r1 === 14) s += 0.1;
+        return Math.min(Math.max(s,0),1);
+    }
+
+    static effective(cards, community, stage) {
+        if (!community || !community.length) return this.preflop(cards);
+        const all = [...cards, ...community];
+        const r = this.evaluate(all);
+        let base = (r.score[0] + 1) / 9;
+        let bonus = 0;
+        if (stage !== 'Ривер') {
+            const sc = {};
+            all.forEach(c => sc[c.suit] = (sc[c.suit]||0)+1);
+            for (let v of Object.values(sc)) if (v===4) { bonus += 0.2; break; }
+            const rs = [...new Set(all.map(c=>c.rank))].sort((a,b)=>a-b);
+            for (let st = 2; st <= 10; st++) {
+                const w = new Set(); for (let i=st;i<st+5;i++) w.add(i);
+                if (rs.filter(r => w.has(r)).length === 4) { bonus += 0.15; break; }
+            }
+        }
+        return Math.min(base + bonus, 1);
+    }
+
+    static strDesc(s) {
+        if (s >= 0.8) return "🔥 очень сильная";
+        if (s >= 0.6) return "💪 сильная";
+        if (s >= 0.4) return "👍 средняя";
+        if (s >= 0.2) return "👎 слабая";
+        return "💀 очень слабая";
+    }
+}
+
+// ============================================================
+// ИГРОК
+// ============================================================
+
+class Player {
+    constructor(name, stack, isHuman = false) {
+        this.name = name;
+        this.stack = stack;
+        this.cards = [];
+        this.currentBet = 0;
+        this.folded = false;
+        this.eliminated = false;
+        this.isHuman = isHuman;
+        this.lastAction = null;
+        this.handName = "";
+        this.bestCards = [];
+        this.winner = false;
+    }
+    reset() {
+        this.cards = []; 
+        this.currentBet = 0; 
+        this.folded = false;
+        this.lastAction = null; 
+        this.handName = ""; 
+        this.bestCards = [];
+        this.winner = false;
+    }
+}
+
+// ============================================================
+// СОСТОЯНИЕ ИГРЫ
+// ============================================================
+
+let G = {
+    players: [],
+    deck: new Deck(),
+    comm: [],
+    pot: 0,
+    curBet: 0,
+    dealerPos: 0,
+    sbPos: -1,
+    bbPos: -1,
+    stage: 'Префлоп',
+    handNum: 0,
+    playing: false,
+    serverUrl: '',
+    useLLM: true,
+    llmAvailable: true,
+    humanFolded: false,
+    currentTurnIdx: -1,
+    showdownMode: false,
+    playerSlots: []    // DOM-слоты (создаются один раз)
+};
+
+// ============================================================
+// СОЗДАНИЕ DOM-СЛОТОВ (один раз, без пересоздания)
+// ============================================================
+
+function createPlayerSlots() {
+    const table = document.getElementById('pokerTable');
+    // Удаляем старые слоты если были
+    G.playerSlots.forEach(slot => {
+        if (slot.player && slot.player.parentNode) slot.player.parentNode.removeChild(slot.player);
+        if (slot.bet && slot.bet.parentNode) slot.bet.parentNode.removeChild(slot.bet);
+        if (slot.bubble && slot.bubble.parentNode) slot.bubble.parentNode.removeChild(slot.bubble);
+    });
+    G.playerSlots = [];
+
+    const n = G.players.length;
+    const rx = 42, ry = 40;
+
+    for (let i = 0; i < n; i++) {
+        const ang = (i / n) * 2 * Math.PI - Math.PI / 2;
+        const x = 50 + rx * Math.cos(ang);
+        const y = 50 + ry * Math.sin(ang);
+
+        // === Слот игрока ===
+        const pl = document.createElement('div');
+        pl.className = 'player';
+        pl.style.left = `${x}%`;
+        pl.style.top = `${y}%`;
+        pl.style.transform = 'translate(-50%, -50%)';
+
+        const nameEl = document.createElement('div');
+        nameEl.className = 'player-name';
+
+        const stackEl = document.createElement('div');
+        stackEl.className = 'player-stack';
+
+        const cardsEl = document.createElement('div');
+        cardsEl.className = 'player-cards';
+
+        const handEl = document.createElement('div');
+        handEl.className = 'player-hand-name';
+
+        pl.appendChild(nameEl);
+        pl.appendChild(stackEl);
+        pl.appendChild(cardsEl);
+        pl.appendChild(handEl);
+        table.appendChild(pl);
+
+        // === Слот ставки (фиксированная позиция) ===
+        const betX = 50 + (rx * 0.55) * Math.cos(ang);
+        const betY = 50 + (ry * 0.55) * Math.sin(ang);
+        const bet = document.createElement('div');
+        bet.className = 'player-bet hidden';
+        bet.style.left = `${betX}%`;
+        bet.style.top = `${betY}%`;
+        bet.style.transform = 'translate(-50%, -50%)';
+        table.appendChild(bet);
+
+        // === Слот облачка действия (фиксированная позиция) ===
+        const bubX = 50 + (rx * 0.78) * Math.cos(ang);
+        const bubY = 50 + (ry * 0.78) * Math.sin(ang) - 3;
+        const bubble = document.createElement('div');
+        bubble.className = 'action-bubble hidden';
+        bubble.style.left = `${bubX}%`;
+        bubble.style.top = `${bubY}%`;
+        bubble.style.transform = 'translate(-50%, -50%)';
+        table.appendChild(bubble);
+
+        G.playerSlots.push({
+            player: pl,
+            nameEl: nameEl,
+            stackEl: stackEl,
+            cardsEl: cardsEl,
+            handEl: handEl,
+            bet: bet,
+            bubble: bubble
+        });
+    }
+}
+
+// ============================================================
+// ОБНОВЛЕНИЕ СОСТОЯНИЯ ИГРОКОВ (без пересоздания DOM)
+// ============================================================
+
+function renderCardInto(container, card, hidden, highlight) {
+    const d = document.createElement('div');
+    d.className = `card ${hidden ? 'back' : card.getSuitClass()} ${highlight ? 'highlight' : ''}`;
+    if (!hidden) d.textContent = card.toString();
+    container.appendChild(d);
+}
+
+function updatePlayerSlot(i) {
+    const p = G.players[i];
+    const slot = G.playerSlots[i];
+    if (!slot) return;
+
+    // Классы
+    let classes = 'player';
+    if (p.isHuman) classes += ' human';
+    if (p.folded) classes += ' folded';
+    if (i === G.currentTurnIdx && !p.folded && !p.eliminated) classes += ' active-turn';
+    if (p.winner) classes += ' winner';
+    slot.player.className = classes;
+
+    // Имя с бейджами
+    let nameHtml = p.isHuman ? '👤 ТЫ' : `🤖 ${p.name}`;
+    if (i === G.dealerPos) nameHtml += ' <span class="badge dealer">D</span>';
+    if (i === G.sbPos) nameHtml += ' <span class="badge sb">SB</span>';
+    if (i === G.bbPos) nameHtml += ' <span class="badge bb">BB</span>';
+    slot.nameEl.innerHTML = nameHtml;
+
+    // Стек
+    slot.stackEl.textContent = `$${p.stack}`;
+
+    // Карты (пересоздаём только при изменении — это редкое событие)
+    const showCards = p.isHuman || G.humanFolded || p.winner || !G.playing || p.eliminated;
+    const highlightIds = new Set(p.bestCards.map(c => c.id));
+    const shouldHighlight = p.winner && G.showdownMode;
+
+    slot.cardsEl.innerHTML = '';
+    if (p.cards.length > 0) {
+        p.cards.forEach(c => {
+            const hl = shouldHighlight && highlightIds.has(c.id);
+            renderCardInto(slot.cardsEl, c, !showCards, hl);
+        });
+    }
+
+    // Название комбинации (только у победителя)
+    if (p.handName && p.winner && G.showdownMode) {
+        slot.handEl.textContent = '🏆 ' + p.handName;
+        slot.handEl.classList.add('visible');
+    } else {
+        slot.handEl.classList.remove('visible');
+    }
+
+    // Ставка (фишка)
+    if (p.currentBet > 0 && !p.folded && !p.eliminated) {
+        slot.bet.textContent = `💰 $${p.currentBet}`;
+        slot.bet.classList.remove('hidden');
+    } else {
+        slot.bet.classList.add('hidden');
+    }
+
+    // Облачко действия
+    if (p.lastAction && !p.folded && !p.eliminated) {
+        slot.bubble.textContent = p.lastAction.text;
+        slot.bubble.className = `action-bubble ${p.lastAction.type}`;
+    } else if (p.lastAction && (p.folded || p.eliminated)) {
+        // Для сфолдивших показываем только "ФОЛД" коротко
+        slot.bubble.classList.add('hidden');
+    } else {
+        slot.bubble.classList.add('hidden');
+    }
+}
+
+function updateAllSlots() {
+    for (let i = 0; i < G.players.length; i++) {
+        updatePlayerSlot(i);
+    }
+}
+
+function updateCommunity(highlightIds = new Set()) {
+    const c = document.getElementById('communityCards');
+    c.innerHTML = '';
+    G.comm.forEach(card => {
+        const hl = highlightIds.has(card.id);
+        renderCardInto(c, card, false, hl);
+    });
+}
+
+function updatePot() {
+    document.getElementById('potDisplay').textContent = `Банк: $${G.pot}`;
+}
+
+function updateStage() {
+    document.getElementById('stageDisplay').textContent = G.stage;
+}
+
+function updateHand() {
+    document.getElementById('handNumber').textContent = `Раздача #${G.handNum}`;
+}
+
+function setObserverMode(active) {
+    const banner = document.getElementById('observerBanner');
+    if (active) banner.classList.add('visible');
+    else banner.classList.remove('visible');
+}
+
+function log(msg, type='') {
+    const c = document.getElementById('logContainer');
+    const e = document.createElement('div');
+    e.className = `log-entry ${type}`;
+    e.textContent = msg;
+    c.insertBefore(e, c.firstChild);
+    while (c.children.length > 60) c.removeChild(c.lastChild);
+}
+
+// ============================================================
+// СТАРТ ИГРЫ
+// ============================================================
+
+function startGame() {
+    const ai = parseInt(document.getElementById('aiCount').value);
+    if (isNaN(ai) || ai < 1 || ai > 8) {
+        alert('Введите число ИИ от 1 до 8');
+        return;
+    }
+    G.serverUrl = document.getElementById('serverUrl').value.trim();
+    G.useLLM = G.serverUrl !== '';
+    G.llmAvailable = G.useLLM;
+
+    G.players = [new Player('ТЫ', START, true)];
+    for (let i = 0; i < ai; i++) {
+        G.players.push(new Player(`ИИ_${i+1}`, START, false));
+    }
+
+    G.playing = true;
+    G.handNum = 0;
+    G.dealerPos = 0;
+    G.humanFolded = false;
+    G.showdownMode = false;
+
+    // Создаём слоты ОДИН РАЗ на всю игру
+    createPlayerSlots();
+
+    log(`🎮 Игра началась! Игроков: ${G.players.length} (1 человек + ${ai} ИИ)`, 'info');
+    if (G.useLLM) {
+        log(`🤖 LLM сервер: ${G.serverUrl}`, 'llm');
+    } else {
+        log(`🤖 Режим: локальная логика ИИ`, 'info');
+    }
+    
+    playHand();
+}
+
+async function playHand() {
+    if (!G.playing) return;
+
+    G.handNum++;
+    G.deck.reset();
+    G.comm = [];
+    G.pot = 0;
+    G.curBet = 0;
+    G.humanFolded = false;
+    G.currentTurnIdx = -1;
+    G.showdownMode = false;
+    setObserverMode(false);
+
+    G.players.forEach(p => {
+        p.reset();
+        if (p.stack <= 0) p.eliminated = true;
+    });
+
+    updateHand();
+    log(`\n🎰 === Раздача #${G.handNum} ===`, 'info');
+
+    const alive = G.players.filter(p => !p.eliminated);
+    if (alive.length < 2) { endGame(); return; }
+
+    alive.forEach(p => p.cards = G.deck.deal(2));
+
+    const n = alive.length;
+    const sb = alive[(G.dealerPos + 1) % n];
+    const bb = alive[(G.dealerPos + 2) % n];
+    
+    G.sbPos = G.players.indexOf(sb);
+    G.bbPos = G.players.indexOf(bb);
+
+    postBlind(sb, SB);
+    postBlind(bb, BB);
+    G.curBet = BB;
+
+    log(`🎲 Блайнды: ${sb.name}=$${SB}, ${bb.name}=$${BB}`);
+    
+    updateAllSlots();
+    updateCommunity();
+    updatePot();
+    await sleep(DELAY_STAGE);
+
+    const stages = [
+        {name:'Префлоп', n:0},
+        {name:'Флоп', n:3},
+        {name:'Тёрн', n:1},
+        {name:'Ривер', n:1}
+    ];
+
+    for (let st of stages) {
+        G.stage = st.name;
+        updateStage();
+
+        if (st.n > 0) {
+            const nc = G.deck.deal(st.n);
+            G.comm.push(...nc);
+            updateCommunity();
+            log(`🃏 ${st.name}: ${nc.map(c=>c.toString()).join(' ')}`);
+            await sleep(DELAY_STAGE);
+        }
+
+        if (st.name !== 'Префлоп') {
+            G.curBet = 0;
+            G.players.forEach(p => { p.currentBet = 0; });
+            updateAllSlots();
+        }
+
+        await bettingRound(st.name);
+
+        const human = G.players.find(p => p.isHuman);
+        if (human && human.folded && !G.humanFolded) {
+            G.humanFolded = true;
+            log(`👁️ Ты сфолдил. Карты ИИ теперь открыты.`, 'info');
+            setObserverMode(true);
+            updateAllSlots();
+        }
+
+        const active = G.players.filter(p => !p.folded && !p.eliminated);
+        if (active.length === 1) {
+            const w = active[0];
+            w.stack += G.pot;
+            log(`🏆 ${w.name} выигрывает $${G.pot} (все сбросили)`, 'win');
+            updateAllSlots();
+            await sleep(DELAY_NEXT_HAND);
+            nextHand();
+            return;
+        }
+    }
+
+    await showdown();
+}
+
+async function bettingRound(stage) {
+    const alive = G.players.filter(p => !p.eliminated && !p.folded);
+    if (alive.length <= 1) return;
+
+    const order = [];
+    for (let i = 0; i < alive.length; i++) {
+        order.push(alive[(G.bbPos + 1 + i) % alive.length]);
+    }
+
+    let lastRaiser = null;
+    let acted = new Set();
+    let safetyCounter = 0;
+
+    while (safetyCounter++ < 30) {
+        for (let p of order) {
+            if (p.folded || p.eliminated) continue;
+            
+            const toCall = G.curBet - p.currentBet;
+            if (acted.has(p) && toCall === 0 && lastRaiser !== p) continue;
+
+            G.currentTurnIdx = G.players.indexOf(p);
+            updateAllSlots();
+
+            let action, amount;
+
+            if (p.isHuman && !p.folded) {
+                const decision = await humanTurn(p, toCall, stage);
+                if (!decision) return;
+                action = decision.action;
+                amount = decision.amount;
+            } else {
+                // === ХОД ИИ ===
+                // Показываем "думает"
+                const idx = G.players.indexOf(p);
+                p.lastAction = {type: 'thinking', text: '💭 думает...'};
+                updatePlayerSlot(idx);
+                
+                await sleep(DELAY_AI_THINK);
+
+                const decision = await aiDecision(p, toCall, stage);
+                action = decision.action;
+                amount = decision.amount;
+            }
+
+            execAction(p, action, amount, toCall);
+
+            if (action === 'raise') lastRaiser = p;
+            acted.add(p);
+
+            const active = G.players.filter(pl => !pl.folded && !pl.eliminated);
+            if (active.length <= 1) return;
+
+            await sleep(DELAY_AI_ACTION);
+        }
+
+        const active = G.players.filter(p => !p.folded && !p.eliminated);
+        const allMatched = active.every(p => p.currentBet === G.curBet);
+        if (allMatched) break;
+    }
+}
+
+async function humanTurn(player, toCall, stage) {
+    const str = HandEvaluator.effective(player.cards, G.comm, stage);
+    const desc = HandEvaluator.strDesc(str);
+    
+    document.getElementById('handStrength').textContent = `${(str*100).toFixed(0)}%`;
+    document.getElementById('handDescription').textContent = desc;
+
+    const foldBtn = document.getElementById('foldBtn');
+    const checkBtn = document.getElementById('checkBtn');
+    const callBtn = document.getElementById('callBtn');
+    const raiseBtn = document.getElementById('raiseBtn');
+
+    foldBtn.disabled = toCall === 0;
+    checkBtn.disabled = toCall > 0;
+    callBtn.disabled = toCall === 0;
+    callBtn.textContent = toCall > 0 ? `✅ Колл $${toCall}` : '✅ Колл';
+    raiseBtn.disabled = false;
+
+    log(`🎯 Твой ход [${stage}]`);
+
+    return new Promise(resolve => {
+        window._resolve = resolve;
+        window._player = player;
+        window._toCall = toCall;
+    });
+}
+
+function playerAction(action) {
+    const p = window._player;
+    const toCall = window._toCall;
+    const minR = G.curBet + BB;
+    let amount = 0;
+
+    if (action === 'fold') {
+        log(`❌ ТЫ: ФОЛД`);
+        execAction(p, 'fold', 0, toCall);
+    } else if (action === 'check') {
+        log(`✋ ТЫ: ЧЕК`);
+        execAction(p, 'check', 0, toCall);
+    } else if (action === 'call') {
+        amount = Math.min(toCall, p.stack);
+        log(`✅ ТЫ: КОЛЛ $${amount}`);
+        execAction(p, 'call', amount, toCall);
+    } else if (action === 'raise') {
+        const v = parseInt(document.getElementById('raiseAmount').value) || minR;
+        amount = Math.max(v, minR);
+        amount = Math.min(amount, p.stack);
+        log(`🔥 ТЫ: РЕЙЗ $${amount}`);
+        execAction(p, 'raise', amount, toCall);
+    }
+
+    disableControls();
+    if (window._resolve) {
+        const r = window._resolve;
+        window._resolve = null;
+        r({action, amount});
+    }
+    setTimeout(() => {
+        const active = G.players.filter(pl => !pl.folded && !pl.eliminated);
+        if (active.length > 1) bettingRound(G.stage);
+    }, DELAY_HUMAN);
+}
+
+function disableControls() {
+    ['foldBtn','checkBtn','callBtn','raiseBtn'].forEach(id => {
+        document.getElementById(id).disabled = true;
+    });
+}
+
+// ============================================================
+// ВЫЗОВ LLM-СЕРВЕРА
+// ============================================================
+
+async function callLLMServer(prompt) {
+    if (!G.useLLM || !G.llmAvailable) return null;
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), LLM_TIMEOUT);
+
+        const response = await fetch(G.serverUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: prompt, max_tokens: 80 }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.response || '';
+    } catch (e) {
+        if (e.name === 'AbortError') {
+            log(`⏱️ LLM-сервер не ответил за ${LLM_TIMEOUT/1000}с`, 'error');
+        } else {
+            log(`⚠️ Ошибка LLM: ${e.message}. Переключение на локальную логику.`, 'error');
+            G.llmAvailable = false;  // больше не пытаемся
+        }
+        return null;
+    }
+}
+
+function parseAIResponse(response) {
+    if (!response) return null;
+    const upper = response.toUpperCase();
+    let action = null;
+    
+    if (upper.includes('ФОЛД') || upper.includes('FOLD')) action = 'fold';
+    else if (upper.includes('РЕЙЗ') || upper.includes('RAISE')) action = 'raise';
+    else if (upper.includes('КОЛЛ') || upper.includes('CALL')) action = 'call';
+    else if (upper.includes('ЧЕК') || upper.includes('CHECK')) action = 'check';
+
+    if (!action) return null;
+
+    const nums = response.match(/\d+/g);
+    const amount = nums ? parseInt(nums[nums.length - 1]) : 0;
+    return { action, amount };
+}
+
+// ============================================================
+// РЕШЕНИЕ ИИ (с обращением к LLM-серверу)
+// ============================================================
+
+async function aiDecision(p, toCall, stage) {
+    const str = HandEvaluator.effective(p.cards, G.comm, stage);
+    const adj = Math.min(str * (0.9 + Math.random()*0.2), 1);
+    const strengthDesc = HandEvaluator.strDesc(adj);
+
+    // === Сначала пытаемся спросить LLM-сервер ===
+    if (G.useLLM && G.llmAvailable && !p.isHuman) {
+        const cardsStr = p.cards.map(c => c.toString()).join(' ');
+        const commStr = G.comm.length > 0 ? G.comm.map(c => c.toString()).join(' ') : 'нет';
+        const minR = G.curBet + BB;
+        const checkHint = toCall === 0 
+            ? 'Если не хочешь рейзить — выбери ЧЕК (не КОЛЛ).' 
+            : '';
+
+        const prompt = `Ты играешь в Техасский Холдем покер.
+Стадия: ${stage}
+Твои карты: ${cardsStr}
+На столе: ${commStr}
+Сила руки: ${(adj*100).toFixed(0)}% (${strengthDesc})
+Банк: $${G.pot}
+Нужно уравнять: $${toCall}
+Минимальный рейз (общая ставка): $${minR}
+Твой стек: $${p.stack}
+${checkHint}
+
+Выбери ОДНО действие: ФОЛД, КОЛЛ, ЧЕК или РЕЙЗ.
+Правила:
+- ЧЕК: только если to_call=0
+- ФОЛД: сумма 0
+- КОЛЛ: сумма ${toCall}
+- РЕЙЗ: минимум ${minR}
+
+Ответь СТРОГО одной строкой:
+ДЕЙСТВИЕ: [выбор] | СУММА: [число]`;
+
+        const response = await callLLMServer(prompt);
+        if (response) {
+            const parsed = parseAIResponse(response);
+            if (parsed) {
+                log(`🧠 ${p.name}: ${response.trim()}`, 'llm');
+                
+                // Валидация ответа LLM
+                let { action, amount } = parsed;
+                
+                if (action === 'check' && toCall > 0) action = 'call';
+                if (action === 'call' && toCall === 0) action = 'check';
+                if (action === 'fold' && toCall === 0) action = 'check';
+                if (action === 'call') amount = Math.min(toCall, p.stack);
+                if (action === 'raise') {
+                    amount = Math.max(amount, minR);
+                    amount = Math.min(amount, p.stack);
+                    if (amount <= toCall) {
+                        action = toCall > 0 ? 'call' : 'check';
+                        amount = toCall > 0 ? Math.min(toCall, p.stack) : 0;
+                    }
+                }
+                if (action === 'fold' || action === 'check') amount = 0;
+                
+                return { action, amount };
+            }
+        }
+    }
+
+    // === Локальная логика ИИ (fallback) ===
+    let action, amount;
+    if (adj >= 0.7) {
+        action = 'raise';
+        amount = Math.max(Math.min(G.pot * 0.5, p.stack), G.curBet + BB);
+    } else if (adj >= 0.4) {
+        if (toCall === 0) action = 'check';
+        else if (toCall < p.stack * 0.15) action = 'call';
+        else action = 'fold';
+    } else {
+        if (toCall === 0) action = 'check';
+        else if (toCall < p.stack * 0.05 && Math.random() < 0.3) action = 'call';
+        else action = 'fold';
+    }
+
+    amount = amount || 0;
+    if (action === 'call') amount = Math.min(toCall, p.stack);
+    if (action === 'raise' && amount <= toCall) {
+        action = toCall > 0 ? 'call' : 'check';
+        amount = toCall > 0 ? Math.min(toCall, p.stack) : 0;
+    }
+    if (action === 'fold' || action === 'check') amount = 0;
+
+    log(`🤖 ${p.name}: ${action.toUpperCase()}${amount>0?' $'+amount:''} (локально)`);
+    return { action, amount };
+}
+
+// ============================================================
+// ИСПОЛНЕНИЕ ДЕЙСТВИЯ
+// ============================================================
+
+function execAction(p, action, amount, toCall) {
+    if (action === 'fold') {
+        p.folded = true;
+        p.lastAction = {type: 'fold', text: 'ФОЛД'};
+    } else if (action === 'check') {
+        p.lastAction = {type: 'check', text: 'ЧЕК'};
+    } else if (action === 'call') {
+        const actual = Math.min(toCall, p.stack);
+        if (actual > 0) {
+            p.stack -= actual;
+            p.currentBet += actual;
+            G.pot += actual;
+            p.lastAction = {type: 'call', text: `КОЛЛ $${actual}`};
+        } else {
+            p.lastAction = {type: 'check', text: 'ЧЕК'};
+        }
+    } else if (action === 'raise') {
+        const total = Math.min(amount, p.stack);
+        p.stack -= total;
+        p.currentBet += total;
+        G.pot += total;
+        G.curBet = p.currentBet;
+        p.lastAction = {type: 'raise', text: `РЕЙЗ $${total}`};
+    }
+
+    updateAllSlots();
+    updatePot();
+}
+
+function postBlind(p, amt) {
+    const a = Math.min(amt, p.stack);
+    p.stack -= a;
+    p.currentBet = a;
+    G.pot += a;
+}
+
+// ============================================================
+// ВСКРЫТИЕ — ТОЛЬКО ПОБЕДИТЕЛЬ И ЕГО 5 КАРТ
+// ============================================================
+
+async function showdown() {
+    log(`🔓 ВСКРЫТИЕ`, 'info');
+    
+    const active = G.players.filter(p => !p.folded && !p.eliminated);
+    
+    active.forEach(p => {
+        const all = [...p.cards, ...G.comm];
+        const r = HandEvaluator.evaluate(all);
+        p.handName = HandEvaluator.catName(r.score);
+        p.bestCards = r.cards;
+    });
+
+    let best = null, winners = [];
+    active.forEach(p => {
+        const r = HandEvaluator.evaluate([...p.cards, ...G.comm]);
+        if (best === null || HandEvaluator.cmp(r.score, best) > 0) {
+            best = r.score;
+            winners = [p];
+        } else if (HandEvaluator.cmp(r.score, best) === 0) {
+            winners.push(p);
+        }
+    });
+
+    winners.forEach(w => w.winner = true);
+
+    winners.forEach(w => {
+        log(`🏆 ${w.name}: ${w.cards.map(c=>c.toString()).join(' ')} → ${w.handName}`, 'win');
+    });
+
+    const winIds = new Set();
+    winners.forEach(w => w.bestCards.forEach(c => winIds.add(c.id)));
+
+    G.showdownMode = true;
+    G.currentTurnIdx = -1;
+
+    updateAllSlots();
+    updateCommunity(winIds);
+
+    showBanner(winners, G.pot);
+
+    const share = Math.floor(G.pot / winners.length);
+    winners.forEach(w => w.stack += share);
+
+    await sleep(DELAY_SHOWDOWN);
+
+    const banner = document.getElementById('showdownBanner');
+    banner.classList.remove('visible');
+
+    nextHand();
+}
+
+function showBanner(winners, pot) {
+    const b = document.getElementById('showdownBanner');
+
+    const winnerName = winners.map(w => w.isHuman ? '👤 ТЫ' : '🤖 ' + w.name).join(' + ');
+
+    b.innerHTML = `
+        <h2>🏆 ПОБЕДИТЕЛЬ</h2>
+        <div class="info-row">${winnerName}</div>
+        <div class="hand-name">${winners[0].handName}</div>
+        <div class="info-row">Банк: <strong style="color:#ffd700">$${pot}</strong></div>
+        <div class="cards-preview"></div>
+        <div class="timer">Следующая раздача через ${DELAY_SHOWDOWN/1000} секунд...</div>
+    `;
+
+    const cardsDiv = b.querySelector('.cards-preview');
+    winners[0].bestCards.forEach(c => {
+        renderCardInto(cardsDiv, c, false, false);
+    });
+
+    b.classList.add('visible');
+}
+
+function nextHand() {
+    G.players.forEach(p => {
+        p.winner = false;
+        p.handName = '';
+        p.bestCards = [];
+        p.lastAction = null;
+    });
+    G.dealerPos = (G.dealerPos + 1) % G.players.length;
+    G.showdownMode = false;
+    setObserverMode(false);
+
+    const alive = G.players.filter(p => !p.eliminated && p.stack > 0);
+    if (alive.length < 2) { endGame(); return; }
+
+    updateAllSlots();
+    setTimeout(() => playHand(), DELAY_NEXT_HAND);
+}
+
+function endGame() {
+    G.playing = false;
+    const winner = G.players.filter(p => !p.eliminated)[0];
+    if (winner) {
+        log(`\n🎉🎉🎉 ПОБЕДИТЕЛЬ ТУРНИРА: ${winner.name}! 🎉🎉🎉`, 'win');
+        const b = document.getElementById('showdownBanner');
+        b.innerHTML = `
+            <h2>🏆 КОНЕЦ ТУРНИРА</h2>
+            <div class="info-row">${winner.isHuman ? '🎉 Ты выиграл турнир!' : `Победитель: 🤖 ${winner.name}`}</div>
+            <div class="info-row">Финальный стек: <strong style="color:#ffd700">$${winner.stack}</strong></div>
+        `;
+        b.classList.add('visible');
+    }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>

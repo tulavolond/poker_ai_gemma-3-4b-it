@@ -179,11 +179,130 @@ _quick_test()
 # HTTP-ОБРАБОТЧИК
 # ============================================================
 
+# class ModelHandler(BaseHTTPRequestHandler):
+
+#     def do_GET(self):
+#         self.send_response(200)
+#         self.send_header('Content-Type', 'application/json')
+#         self.end_headers()
+#         self.wfile.write(json.dumps({'status': 'ok'}).encode())
+
+#     def do_POST(self):
+#         try:
+#             content_length = self.headers.get('Content-Length')
+#             if content_length is None:
+#                 self._send_error(400, "Нет Content-Length")
+#                 return
+#             length = int(content_length)
+#             if length == 0:
+#                 self._send_error(400, "Пустое тело")
+#                 return
+
+#             raw_body = self.rfile.read(length)
+#             body = json.loads(raw_body.decode('utf-8'))
+
+#             prompt_from_client = body.get('prompt', '')
+#             max_tokens = body.get('max_tokens', 80)
+
+#             if not prompt_from_client.strip():
+#                 self._send_error(400, "Пустой prompt")
+#                 return
+
+#             messages = [{"role": "user", "content": prompt_from_client}]
+#             chat_prompt = tokenizer.apply_chat_template(
+#                 messages, tokenize=False, add_generation_prompt=True,
+#             )
+
+#             inputs = tokenizer(
+#                 chat_prompt,
+#                 return_tensors="pt",
+#                 truncation=True,
+#                 max_length=2048,
+#                 add_special_tokens=False,   # chat_prompt уже с <bos>
+#             ).to(model.device)
+
+#             input_length = inputs["input_ids"].shape[1]
+
+#             with torch.no_grad():
+#                 outputs = model.generate(
+#                     **inputs,
+#                     max_new_tokens=max_tokens,
+#                     min_new_tokens=1,
+#                     do_sample=False,
+#                     repetition_penalty=1.1,
+#                     eos_token_id=stop_ids,
+#                     bad_words_ids=[[i] for i in bad_ids],
+#                 )
+
+#             generated_ids = outputs[0][input_length:]
+#             response_text = tokenizer.decode(
+#                 generated_ids, skip_special_tokens=True,
+#             ).strip()
+
+#             for tok in ('<end_of_turn>', '<eos>', '<bos>', '<pad>',
+#                         '<start_of_turn>', 'model\n'):
+#                 response_text = response_text.replace(tok, '')
+#             response_text = response_text.strip()
+
+#             print(f"  📥 {len(raw_body)}b → gen={generated_ids.tolist()} "
+#                   f"→ {repr(response_text[:80])}", flush=True)
+
+#             if not response_text:
+#                 response_text = "ДЕЙСТВИЕ: ФОЛД | СУММА: 0"
+
+#             self.send_response(200)
+#             self.send_header('Content-Type', 'application/json')
+#             self.end_headers()
+#             self.wfile.write(json.dumps(
+#                 {'response': response_text}, ensure_ascii=False,
+#             ).encode('utf-8'))
+
+#         except Exception as e:
+#             print(f"  ❌ Ошибка: {e}", flush=True)
+#             traceback.print_exc()
+#             try:
+#                 self._send_error(500, str(e))
+#             except Exception:
+#                 pass
+
+#     def _send_error(self, code, message):
+#         self.send_response(code)
+#         self.send_header('Content-Type', 'application/json')
+#         self.end_headers()
+#         self.wfile.write(json.dumps({'error': message}).encode())
+
+#     def log_message(self, format, *args):
+#         pass
+
+# ============================================================
+# HTTP-ОБРАБОТЧИК (с CORS)
+# ============================================================
+
+# Разрешённые origins для CORS
+# "*" = разрешить все (удобно для разработки)
+# Для продакшена укажите конкретный origin: "http://localhost:8000"
+ALLOWED_ORIGINS = "*"
+
+
 class ModelHandler(BaseHTTPRequestHandler):
+
+    def _set_cors_headers(self):
+        """Устанавливает CORS-заголовки для всех ответов."""
+        self.send_header('Access-Control-Allow-Origin', ALLOWED_ORIGINS)
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+        self.send_header('Access-Control-Max-Age', '86400')  # кэш preflight на 24 часа
+
+    def do_OPTIONS(self):
+        """Обработка preflight-запросов от браузера."""
+        self.send_response(200)
+        self._set_cors_headers()
+        self.end_headers()
 
     def do_GET(self):
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
+        self._set_cors_headers()  # ← ДОБАВЛЕНО
         self.end_headers()
         self.wfile.write(json.dumps({'status': 'ok'}).encode())
 
@@ -218,7 +337,7 @@ class ModelHandler(BaseHTTPRequestHandler):
                 return_tensors="pt",
                 truncation=True,
                 max_length=2048,
-                add_special_tokens=False,   # chat_prompt уже с <bos>
+                add_special_tokens=False,
             ).to(model.device)
 
             input_length = inputs["input_ids"].shape[1]
@@ -252,6 +371,7 @@ class ModelHandler(BaseHTTPRequestHandler):
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
+            self._set_cors_headers()  # ← ДОБАВЛЕНО
             self.end_headers()
             self.wfile.write(json.dumps(
                 {'response': response_text}, ensure_ascii=False,
@@ -268,12 +388,14 @@ class ModelHandler(BaseHTTPRequestHandler):
     def _send_error(self, code, message):
         self.send_response(code)
         self.send_header('Content-Type', 'application/json')
+        self._set_cors_headers()  # ← ДОБАВЛЕНО (ошибки тоже должны иметь CORS!)
         self.end_headers()
         self.wfile.write(json.dumps({'error': message}).encode())
 
     def log_message(self, format, *args):
-        pass
-
+        # Логируем только не-OPTIONS запросы для чистоты консоли
+        if args and 'OPTIONS' not in str(args[0]):
+            print(f"  🌐 {args[0]}" if args else "")
 
 server = HTTPServer((HOST, PORT), ModelHandler)
 print(f"\n🚀 Сервер: http://{HOST}:{PORT}")
