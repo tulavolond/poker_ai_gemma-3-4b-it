@@ -760,11 +760,11 @@ h1 {
 // ============================================================
 // КОНСТАНТЫ
 // ============================================================
-const DELAY_AI_THINK   = 3000;
+const DELAY_AI_THINK   = 100;
 const DELAY_AI_ACTION  = 200;
 const DELAY_HUMAN      = 500;
 const DELAY_STAGE      = 200;
-const DELAY_SHOWDOWN   = 9000;
+const DELAY_SHOWDOWN   = 5000;
 const DELAY_NEXT_HAND  = 500;
 const LLM_TIMEOUT      = 45000;
 
@@ -2222,13 +2222,12 @@ async function showdown() {
     const share = Math.floor(G.pot / winners.length);
     winners.forEach(w => w.stack += share);
 
-    await sleep(DELAY_SHOWDOWN);
+    await sleep(5000);
     
     const banner = document.getElementById('showdownBanner');
     banner.classList.remove('visible');
     
-    await sleep(DELAY_SHOWDOWN);
-    await sleep(DELAY_SHOWDOWN);
+    await sleep(8000);
     nextHand();
 }
 
