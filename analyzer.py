@@ -11,8 +11,14 @@ from collections import Counter
 RANKS = list(range(2, 15))  # 2-14, где J=11, Q=12, K=13, A=14 "J♠", "T♥"
 SUITS = ['♠', '♥', '♦', '♣']
 
-RANK_NAMES = {10: 'T', 11: 'J', 12: 'Q', 13: 'K', 14: 'A'}
+# RANK_NAMES = {10: 'T', 11: 'J', 12: 'Q', 13: 'K', 14: 'A'}
 
+# Задаем текстовые имена для картинок
+RANK_NAMES = {11: 'J', 12: 'Q', 13: 'K', 14: 'A'}
+
+# Собираем rank_map: сначала числа от 2 до 10, затем картинки
+# rank_map = {str(i): i for i in range(2, 11)}  # '2': 2, ..., '10': 10
+# rank_map.update({v: k for k, v in RANK_NAMES.items()})
 
 class Card:
     def __init__(self, rank, suit):
