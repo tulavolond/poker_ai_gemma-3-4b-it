@@ -1,16 +1,27 @@
 # Запуск 2 скрипта
 # python -m http.server 8000 
 # python poker_server_final_with_lora_add_444.py
+# Invoke-RestMethod -Uri http://192.168.1.103:8899/pretrain
+
+# python train_stage1.py
+# python train_stage2.py
 
 https://chat.qwen.ai/s/869113ee-618e-4af5-89ed-26656bde1b69?fev=0.3.28
 https://share.google/aimode/DGaml90K70czynm6B
 
+# python -c "import torch; import transformers; import peft; print('Всё готово!'); print(f'PyTorch: {torch.__version__}'); print(f'CUDA: {torch.cuda.is_available()}')"
 
 curl -X POST http://192.168.1.103:8899 -H "Content-Type: application/json" -d '{\"prompt\": \"Скажи привет\", \"max_tokens\": 10}'
 curl -X POST http://192.168.1.103:8899 -H "Content-Type: application/json" -d '{\"prompt\": \"Ситуация: [описание]. Доступные действия: 1) ФОЛД, 2) КОЛЛ $50, 3) РЕЙЗ $150. Ты —  грессивный игрок с флеш-дро. Выбери НОМЕРОМ одно действие и кратко объясни почему.\", \"max_tokens\": 10}'
 curl -X POST http://192.168.1.103:8899 -H "Content-Type: application/json" -d '{\"prompt\": \"У меня на руках A♠ K♠, банк $100. Что делать?\", \"max_tokens\": 50}'
-Invoke-RestMethod -Uri "http://192.168.1.103:8899" -Method Post -Headers @{"Content-Type"="application/json"} -Body '{"prompt": "Say hello", "max_tokens": 20}'
+# Invoke-RestMethod -Uri "http://192.168.1.103:8899" -Method Post -Headers @{"Content-Type"="application/json"} -Body '{"prompt": "Say hello", "max_tokens": 20}'
 Invoke-RestMethod -Uri "http://192.168.1.103:8899" -Method Post -Headers @{"Content-Type"="application/json"} -Body '{"prompt": "У меня на руках A K, банк $100. Что делать?", "max_tokens": 20}'
+
+## Проверка 1: отвечает ли сервер вообще
+curl http://192.168.1.103:8899/stats
+
+# Проверка 2: если на Windows без curl
+powershell -Command "(Invoke-WebRequest -Uri http://192.168.1.103:8899/stats).Content"
 
 # python print(torch.cuda.get_device_properties(0).total_memory / 1e9, "GB")
 

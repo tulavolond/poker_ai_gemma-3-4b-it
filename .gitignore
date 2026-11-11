@@ -12,8 +12,15 @@ poker_gemma3_lora/
 poker_gemma3_demo_lora/
 poker_gemma_lora/
 outputs_poker_gemma/
+lora_preflop_stage_2/
 __pycache__/
 poker_gemma3_merged/
+lora_preflop_stage_2_interrupted/
+lora_preflop_stage_3/
+lora_preflop_stage1/
+lora_preflop_stage2/
+lora_preflop_stage2_interrupted/
+poker_gemma3_lora_check/
 1786073807.png
 data_test.jsonl
 data_train.jsonl

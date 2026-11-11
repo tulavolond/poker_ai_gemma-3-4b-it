@@ -1,6 +1,7 @@
 import os
 import torch
 from dotenv import load_dotenv
+import time
 
 from transformers import (
     AutoTokenizer,
@@ -23,8 +24,9 @@ from peft import (
 # Настройки
 # ============================================================
 
-MODEL_ID = "google/gemma-3-4b-it"
-OUTPUT_DIR = "./poker_gemma3_demo_lora"
+# MODEL_ID = "google/gemma-3-4b-it"
+MODEL_ID = "google/gemma-3-1b-it"
+OUTPUT_DIR = "./gemma1_lora_check_1b"
 MAX_LENGTH = 256
 
 INSTRUCTION = (
@@ -39,22 +41,34 @@ INSTRUCTION = (
 
 TRAIN_EXAMPLES = [
     {
-        "board": "4♠ 5♥ 4♦ J♣ 4♣",
+        "board": "4♠ 5♥ 4♦",
         "hand": "5♣ 5♦",
         "answer": "Комбинация: фулл-хаус. Шанс победы очень высокий, примерно 95%.",
-        "check": ["фулл", "%"],
+        "check": ["фулл-хаус", "%"],
     },
     {
-        "board": "A♠ K♠ Q♠ J♠ 2♦",
-        "hand": "T♠ 9♠",
+        "board": "J♠ K♠ Q♠",
+        "hand": "10♠ 9♠",
         "answer": "Комбинация: роял-флеш. Шанс победы максимальный, примерно 100%.",
-        "check": ["роял", "%"],
+        "check": ["флэш-роял", "%"],
     },
     {
-        "board": "2♣ 7♦ 9♥ J♠ A♣",
+        "board": "2♣ 7♦ 9♥",
         "hand": "K♦ K♥",
         "answer": "Комбинация: пара королей. Шанс победы средний, примерно 35%.",
         "check": ["пара", "%"],
+    },
+    {
+        "board": "2♣ 7♦ 9♥",
+        "hand": "Q♦ Q♥",
+        "answer": "Комбинация: пара дам. Шанс победы средний, примерно 45%.",
+        "check": ["пара", "%"],
+    },
+    {
+        "board": "5♣ 6♦ 7♥",
+        "hand": "8♦ 9♥",
+        "answer": "Комбинация: стрит. Шанс победы вусокий, примерно 85%.",
+        "check": ["стрит", "%"],
     },
 ]
 
@@ -214,12 +228,13 @@ def main():
     )
 
     print(f"Размер обучающей выборки: {len(train_dataset)}")
-
+    start = time.time()
     print("=" * 80)
-    print("ШАГ 3. Загрузка базовой модели")
+    print(f"ШАГ 3. Загрузка базовой модели {start/60:.1f}")
     print("=" * 80)
 
     use_cuda = torch.cuda.is_available()
+    print(f"GPU is use_cuda: {use_cuda}")
 
     model_kwargs = {
         "token": HF_TOKEN,
@@ -252,9 +267,9 @@ def main():
         model.enable_input_require_grads()
 
     print("✅ Базовая модель загружена")
-
+    elapsed = time.time() - start
     print("=" * 80)
-    print("ШАГ 4. Подключение LoRA")
+    print(f"ШАГ 4. Подключение LoRA {elapsed/60:.1f}мс.")
     print("=" * 80)
 
     peft_config = LoraConfig(
@@ -276,6 +291,8 @@ def main():
 
     try:
         model = get_peft_model(model, peft_config)
+        model.print_trainable_parameters() # !!!!!!!!!!!!!!!
+        
     except Exception as e:
         print(f"⚠️ Не удалось применить target_modules: {e}")
         print("Пробуем target_modules='all-linear'")
@@ -290,7 +307,7 @@ def main():
 
     training_args = TrainingArguments(
         output_dir=OUTPUT_DIR,
-        num_train_epochs=30,
+        num_train_epochs=100,
         per_device_train_batch_size=1,
         gradient_accumulation_steps=1,
         learning_rate=2e-4,
@@ -310,10 +327,15 @@ def main():
         train_dataset=train_dataset,
         data_collator=default_data_collator,
     )
-
+    start = time.time()
+    print(f"ШАГ 4. Подключение LoRA")
     print("Начинаем обучение...")
+    
     trainer.train()
-
+    
+    elapsed = time.time() - start
+    print("=" * 80)
+    print(f"Время: {elapsed/60:.1f}с.")
     print("=" * 80)
     print("ШАГ 6. Сохранение LoRA и токенизатора")
     print("=" * 80)
@@ -328,7 +350,7 @@ def main():
     print("=" * 80)
 
     model.eval()
-    model.config.use_cache = True
+    model.config.use_cache = False
     model.print_trainable_parameters()
 
     if hasattr(model, "gradient_checkpointing_disable"):

@@ -263,7 +263,7 @@ class ModelHandler(BaseHTTPRequestHandler):
                 response_text = "АНАЛИЗ: Ошибка генерации\nДЕЙСТВИЕ: FOLD\nСУММА: 0"
 
             print(f"\n📥 Запрос от ИИ-игрока. Длина промпта: {len(prompt)}")
-            print(f"\n📥промпт: {prompt}")
+            # print(f"\n📥промпт: {prompt}")
             print(f"📤 Ответ модели: {response_text[:600]}")
 
             self.send_response(200)

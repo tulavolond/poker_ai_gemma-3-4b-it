@@ -541,7 +541,7 @@
             background: rgba(0, 0, 0, 0.85);
             border-radius: clamp(8px, 1.5vh, 15px);
             padding: clamp(6px, 1.2vh, 15px);
-            max-height: clamp(100px, 18vh, 280px);
+            max-height: clamp(100px, 23vh, 280px);
             overflow-y: auto;
             border: clamp(1px, 0.3vh, 2px) solid #444;
         }
@@ -887,7 +887,7 @@
 
 <body>
     <div class="container">
-        <h1>🎰 Покер: Человек против ИИ</h1>
+        <!-- <h1>🎰 Покер: Человек против ИИ</h1> -->
 
         <div class="settings">
             <h3>⚙️ Настройки</h3>
@@ -959,13 +959,13 @@
             <div id="logContainer"></div>
         </div>
         <div class="ai-debug-panel" id="aiDebugPanel">
-            <h3>🧠 Мозг ИИ (Отладка)</h3>
+            <!-- <h3>🧠 Мозг ИИ (Отладка)</h3> -->
             <div class="debug-row">Статус: <span id="aiStatus">Ожидание</span></div>
             <div class="debug-row">Накоплено рук для обучения: <span id="aiBuffer">0 / 50</span></div>
             <div class="debug-row">Последний Loss: <span id="aiLoss">0</span> Последний Win: <span id="aiWin">0</span>
             </div>
-            <button class="button check" onclick="forceSaveLoRA()" style="margin-top:8px; font-size:0.8em;">💾
-                Принудительно получить веса</button>
+            <!-- <button class="button check" onclick="forceSaveLoRA()" style="margin-top:8px; font-size:0.8em;">💾
+                Принудительно получить веса</button> -->
         </div>
     </div>
 
@@ -1552,6 +1552,11 @@
             } finally {
                 G.bettingActive = false;
                 G.currentTurnIdx = -1;
+                if (window._resolve) {   // разрешаем висящий промис
+                    const r = window._resolve;
+                    window._resolve = null;
+                    r(null);
+                }
                 updateAllSlots();
             }
         }
@@ -1673,7 +1678,7 @@
         // 2. Логика для СЕРВЕРНОГО ИИ (отправляет промпт с описанием стиля)
         async function serverAiDecision(p, toCall, stage) {
             const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 5000);  // 5 сек
+            const timeout = setTimeout(() => controller.abort(), 225000);  // 5 сек
             const style = p.style;
             const myCards = p.cards.map(c => c.toString()).join(', ');
             const commCards = G.comm.map(c => c.toString()).join(', ') || 'нет';
@@ -1682,45 +1687,57 @@
             let styleInstruction = "";
             if (style.name === 'ТАЙТОВЫЙ') styleInstruction = "Ты играешь очень избирательно. Рейзишь только с силой руки > 0.75. Блефуешь крайне редко (2%). При больших ставках сбрасываешь 90% рук.";
             else if (style.name === 'ЛУЗОВЫЙ') styleInstruction = "Ты играешь много рук. Рейзишь с силой > 0.55. Часто блефуешь (10%). Редко сбрасываешь даже при больших ставках.";
-            else if (style.name === 'АГРЕССИВНЫЙ') styleInstruction = "Ты давишь на соперников. Рейзишь с силой > 0.55. Важно: Никогда не ставишь ставку более 30% от твоего стек. Не ставишь ставку если сила руки < 0.50";
+            else if (style.name === 'АГРЕССИВНЫЙ') styleInstruction = "Ты — АГРЕССИВНЫЙ игрок. ЖЁСТКИЕ ПРАВИЛА: \
+                - РЕЙЗ в 50% случаев даже со средней рукой (0.45+) \
+                - КОЛЛ редко — предпочитаешь давление рейзами \
+                - ФОЛД только с совсем мусорной рукой (ниже 0.3) \
+                Ты давишь на соперников и заставляешь их ошибаться."
+            // "Ты давишь на соперников. Рейзишь с силой > 0.55. Важно: Никогда не ставишь ставку более 30% от твоего стек. Не ставишь ставку если сила руки < 0.50";
             else if (style.name === 'МАТЕМАТИК') styleInstruction = "Ты играешь строго по математике. Сравниваешь эквити руки с pot odds. Если эквити ниже шансов банка - делаешь фолд.";
             else if (style.name === 'ХИТРЫЙ') styleInstruction = "Ты часто блефуешь (25%), особенно на сухих бордах. Пытаешься выбить соперников рейзом, даже со средней рукой.";
             else if (style.name === 'БЕЗУМНЫЙ') styleInstruction = "Ты играешь хаотично. Рейзишь с силой > 0.50, блефуешь в 30% случаев. Непредсказуем.";
             else if (style.name === 'ПРОФЕССИОНАЛ') styleInstruction = "Ты сбалансирован. Рейзишь с силой > 0.65, блефуешь умеренно (12%). Учитываешь позицию и текстуру борда.";
             else styleInstruction = `Твои параметры: рейз при силе > ${style.raiseThreshold}, блеф ${style.bluffChance * 100}%, фолд к большой ставке ${style.foldToBigBet * 100}%.`;
 
-            const prompt = `Ты профессиональный игрок в покер. 
+            const prompt = `Ты — модуль оценки покерных рук (Техасский Холдем).
+Определи ЛУЧШУЮ 2-карточную комбинацию на префлоп).
+Определи ЛУЧШУЮ 5-карточную комбинацию из 7 карт (2 карманные + 3 общих).
+Определи ЛУЧШУЮ 5-карточную комбинацию из 7 карт (2 карманные + 5 общих).
+Категории (от старшей): Роял-флеш, Стрит-флеш, Каре, Фулл-хаус, Флеш, Стрит, Сет, Две пары, Пара, Старшая карта.
 ТВОЙ СТИЛЬ: ${style.name}. 
 ПРАВИЛА СТИЛЯ: ${styleInstruction}
 
 ТЕКУЩАЯ СИТУАЦИЯ:
 - Стадия: ${stage}
-- Твои карты: ${myCards}
-- Общие карты: ${commCards}
+- hend: ${myCards}
+- board: ${commCards}
 - Банк: $${G.pot}, Твой стек: $${p.stack}
 - Чтобы коллировать, нужно: $${toCall}
 
-Проанализируй ситуацию в соответствии со своим стилем и ответь СТРОГО в этом формате:
+Проанализируй ситуацию в соответствии со своим стилем и 
+Ответь СТРОГО в этом формате ничего лишнего не добавляй!:
 АНАЛИЗ: [1 короткое предложение, почему ты так решаешь]
+answer: [ответ hend + board = check]
 ДЕЙСТВИЕ: [FOLD, CHECK, CALL или RAISE]
-СУММА: [число, или 0]
+СУММА: [число]
 `;
 
             try {
                 const response = await fetch(`${AI_SERVER_URL}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                    body: JSON.stringify({ prompt: prompt, max_tokens: 100 })
+                    body: JSON.stringify({ prompt: prompt, max_tokens: 200 })
                 });
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 const aiText = data.response || "ДЕЙСТВИЕ: FOLD\nСУММА: 0";
 
-                console.log(data);
+                console.log('response data ai:', data);
 
                 // Парсинг ответа
                 const actionMatch = aiText.match(/ДЕЙСТВИЕ:\s*(FOLD|CHECK|CALL|RAISE)/i);
+                // const actionAnswer = aiText.match(/answer:\s*()/i);
                 const amountMatch = aiText.match(/СУММА:\s*(\d+)/i);
 
                 let action = actionMatch ? actionMatch[1].toUpperCase() : 'CALL';
@@ -1730,7 +1747,7 @@
                 if (action === 'CALL' && toCall === 0) action = 'CHECK';
                 if (action === 'RAISE' && p.raisesThisStage > 0) { action = 'CALL'; amount = Math.min(toCall, p.stack); }
 
-                log(`🤖 ${p.name} (${style.name}): ${action} ${amount > 0 ? '$' + amount : ''} [СЕРВЕР]`, 'ai');
+                log(`🤖 ${p.name} (${style.name}): ${action} ${amount > 0 ? '$' + amount : ''} ${aiText} [СЕРВЕР]`, 'ai');
                 // Сохраняем выбор ИИ временно, чтобы отправить результат после вскрытия
                 p.lastServerAction = { action, amount, stage, myCards, commCards };
                 return { action: action.toLowerCase(), amount };
@@ -1747,6 +1764,8 @@
         // 2. Функция отправки результатов в память после вскрытия
         async function trainAIOnHandOutcome(winners, totalPot) {
             console.log('trainAIOnHandOutcome: ', winners, totalPot)
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 25000);  // 5 сек
             for (let p of G.players) {
                 if (p.isHuman || !p.lastServerAction || p.folded) continue; // Обучаем только серверного ИИ
 
@@ -1778,13 +1797,20 @@
                     });
                     // get_request.js
                     updateValueTaning();
-                } catch (e) { console.error("Ошибка сохранения в память ИИ:", e); }
+                } catch (e) {
+                    console.error("Ошибка сохранения в память ИИ:", e);
+                    return localAiDecision(p, toCall, stage);
+                }
+                finally {
+                    clearTimeout(timeout);
+                }
             }
         }
-        
+
         async function updateValueTaning() {
             const url = 'http://192.168.1.103:8899';
-
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 25000);  // 5 сек
             async function fetchData() {
                 try {
                     const response = await fetch(url);
@@ -1802,6 +1828,9 @@
 
                 } catch (error) {
                     console.error('Ошибка при выполнении запроса:', error.message);
+                    return localAiDecision(p, toCall, stage);
+                } finally {
+                    clearTimeout(timeout);
                 }
             }
             try {
@@ -1837,7 +1866,11 @@
 
             // ПЕРВЫЙ ИИ (ИИ_1) работает через сервер, остальные локально
             // Вы можете изменить условие, например: if (p.name === 'ИИ_3')
-            if (p.name === 'ИИ_1') {
+            if (p.name === 'ИИ_2') {
+                return await serverAiDecision(p, toCall, stage);
+            } else if (p.name === 'ИИ_4') {
+                return await serverAiDecision(p, toCall, stage);
+            }else if (p.name === 'ИИ_5') {
                 return await serverAiDecision(p, toCall, stage);
             } else {
                 const decision = localAiDecision(p, toCall, stage);
@@ -1924,6 +1957,8 @@
             winners.forEach(w => log(`🏆 ${w.name} выигрывает $${share + (w === winners[0] ? remainder : 0)}`, 'win'));
             const winIds = new Set();
             winners.forEach(w => (w.keyCards || w.bestCards || []).forEach(c => winIds.add(c.id)));
+            // Если хочешь подсвечивать всю 5-карточную комбинацию — используй bestCards
+            // winners.forEach(w => (w.bestCards || []).forEach(c => winIds.add(c.id))); 
             G.showdownMode = true;
             G.currentTurnIdx = -1;
             G.pot = 0;
@@ -1975,6 +2010,7 @@
                 p.winner = false; p.handName = '';
                 p.bestCards = []; p.keyCards = []; p.lastAction = null;
                 if (p.stack <= 0) p.eliminated = true;
+                p.lastServerAction = null;   // ← добавить
             });
             // Сдвигаем дилера на следующего живого
             for (let k = 1; k <= G.players.length; k++) {

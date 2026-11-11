@@ -1,0 +1,5 @@
+{
+  "pretrain_examples": 9600,
+  "online_examples": 174,
+  "batches_trained": 9
+}
