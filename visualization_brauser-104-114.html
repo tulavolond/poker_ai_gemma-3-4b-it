@@ -1427,7 +1427,7 @@
 
         <div class="ai-debug-panel" id="aiDebugPanel">
             <div>Статус: <span id="aiStatus">Ожидание</span></div>
-            <div>Накоплено рук для обучения: <span id="aiBuffer">0 / 50</span></div>
+            <div>Используется последних раздач для online обучения: <span id="aiBuffer">0 / 100</span></div>
             <div>Loss: <span id="aiLoss">0</span> | Win: <span id="aiWin">0</span></div>
         </div>
     </div>
@@ -1463,6 +1463,7 @@
         let aiDebugInfo = { loraActive: false, bufferSize: 0, lastLoss: 0, lastWin: 0, status: 'Ожидание' };
         let playerActionResolver = null; // 🔧 FIX: Замена window._resolve на локальную переменную модуля
         function minRaiseTo() { return G.curBet + G.lastRaiseSize; }
+        // function minRaiseTo() { return G.lastRaiseSize; }
 
         // ==== КАРТЫ ====
         class Card {
@@ -3136,12 +3137,12 @@
 
                 if (action === 'CALL' && toCall === 0) action = 'CHECK';
                 if (action === 'CHECK' && toCall > 0) action = 'FOLD';
-                if ((action === 'RAISE' || action === 'COLLECT') && p.raisesThisStage > 0) {
+                if ((action === 'RAISE') && p.raisesThisStage > 0) {
                     action = toCall > 0 ? 'CALL' : 'CHECK';
                     amount = action === 'CALL' ? Math.min(toCall, p.stack) : 0;
                 }
                 if (action === 'FOLD' && toCall === 0) action = 'CHECK';
-                if (action === 'RAISE' || action === 'COLLECT') {
+                if (action === 'RAISE') {
                     // const minR = G.curBet + BB;
                     const minR = minRaiseTo();
                     const maxR = p.stack + p.currentBet;
@@ -3512,7 +3513,7 @@
             const lossEl = document.getElementById('aiLoss');
             const winEl = document.getElementById('aiWin');
             if (statusEl) statusEl.textContent = aiDebugInfo.status;
-            if (bufferEl) bufferEl.textContent = `${aiDebugInfo.bufferSize} / 50`;
+            if (bufferEl) bufferEl.textContent = `${aiDebugInfo.bufferSize} / 100`;
             if (lossEl) lossEl.textContent = aiDebugInfo.lastLoss.toFixed(0);
             if (winEl) winEl.textContent = aiDebugInfo.lastWin.toFixed(0);
         }

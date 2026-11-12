@@ -30,7 +30,8 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 # КОНФИГУРАЦИЯ - ВСЕ НАСТРОЙКИ ЗДЕСЬ
 # ============================================================
 BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
-LORA_PREFLOP_PATH = "./lora_preflop_stage_3"
+LORA_PREFLOP_PATH = "./lora_preflop_stage_3" # <- Сгенерирована train_stage_3_google.py и выложена в ollama взять можно chat_memory.py
+# LORA_PREFLOP_PATH = "./lora_online_learning" # <- Сгенерирована онлайн Invoke-RestMethod -Uri http://192.168.1.103:8899/pretrain
 LORA_ONLINE_PATH = "./lora_online_learning"
 MEMORY_FILE = "./poker_memory.json"
 BUFFER_FILE = "./training_buffer.json"
@@ -38,7 +39,7 @@ STATS_FILE = "./training_stats.json"
 PORT = 8899
 HOST = "192.168.1.103"
 
-MEMORY_LIMIT = 50  # сколько примеров копить до обучения
+MEMORY_LIMIT = 100  # сколько примеров копить до обучения
 
 print("=" * 60)
 print("  ЗАГРУЗКА МОДЕЛИ")
@@ -510,7 +511,7 @@ class ModelHandler(BaseHTTPRequestHandler):
                     'preflop_model_available': PREFLOP_AVAILABLE,
                     'buffer_size': len(training_buffer),
                     'last_loss': last_loss,
-                    'recent_memory': memory_cache[-50:],
+                    'recent_memory': memory_cache[-100:],
                     'stats': stats
                 }, ensure_ascii=False).encode('utf-8')
                 self._safe_write(data)
@@ -525,7 +526,7 @@ class ModelHandler(BaseHTTPRequestHandler):
             # self._set_cors()
             # self.end_headers()
             # self._safe_write(b"Server is running")
-            memory = load_memory()[-50:]
+            memory = load_memory()[-100:]
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self._set_cors()
@@ -547,7 +548,7 @@ class ModelHandler(BaseHTTPRequestHandler):
         """Генерация обучающих данных."""
         try:
             print("\n🎓 [PRETRAIN] Запуск предобучения...")
-            examples = generate_training_examples(100)
+            examples = generate_training_examples(1000)
             stats["pretrain_examples"] += len(examples)
             training_buffer.extend(examples)
             save_all_data()
@@ -633,7 +634,7 @@ class ModelHandler(BaseHTTPRequestHandler):
             outcome = body.get("outcome", "LOSS")
             lesson = body.get("lesson", "")
 
-            prompt = f"""СТУДИЯ: {stage.upper()}
+            prompt = f"""СТАДИЯ: {stage.upper()}
 ТВОИ КАРТЫ: {hand_data['my_cards']}
 БОРД: {hand_data['board']}
 БАНК: ${hand_data['pot']}, СТЕК: ${hand_data['stack']}

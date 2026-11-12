@@ -1,10 +1,15 @@
-# Запуск 2 скрипта
+# Запуск скрипта https://poker.t2020.ru
+python poker_server_v3_Quen_async.py
+visualization_brauser-104-114.html
+
 # python -m http.server 8000 
 # python poker_server_final_with_lora_add_444.py
+Обучение онлайн
 # Invoke-RestMethod -Uri http://192.168.1.103:8899/pretrain
 
 # python train_stage1.py
 # python train_stage2.py
+# python train_stage_3_google.py !!! Самый быстрый и лучший способ обучения ИИ !!!
 
 https://chat.qwen.ai/s/869113ee-618e-4af5-89ed-26656bde1b69?fev=0.3.28
 https://share.google/aimode/DGaml90K70czynm6B

@@ -1,5 +1,5 @@
 {
-  "pretrain_examples": 9600,
-  "online_examples": 210,
-  "batches_trained": 9
+  "pretrain_examples": 13600,
+  "online_examples": 214,
+  "batches_trained": 10
 }

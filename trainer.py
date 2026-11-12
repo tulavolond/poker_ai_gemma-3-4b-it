@@ -730,29 +730,3 @@ Pot odds: {bet_river / (pot_river + bet_river):.2%}
     return examples
 
 
-
-# def reinforcement_training_cycle(games=100):
-#     """
-#     RL-цикл:
-#     1. Модель играет против себя
-#     2. Победители получают reward +1
-#     3. Проигравшие -0.3
-#     4. Обучаемся на исходах
-#     """
-#     for game in range(games):
-#         # ИИ играет сам с собой через ваш HTML клиент
-#         # или через автоматический симулятор
-        
-#         # После каждой руки:
-#         for player_decision in game_history:
-#             reward = 1.0 if player_decision.won else -0.3
-            
-#             training_buffer.append({
-#                 "prompt": player_decision.prompt,
-#                 "completion": player_decision.actual_action,
-#                 "reward": reward
-#             })
-        
-#         # Каждые 30 рук — обучаем
-#         if len(training_buffer) >= MEMORY_LIMIT:
-#             train_batch()
