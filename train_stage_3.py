@@ -28,12 +28,12 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 # КОНФИГУРАЦИЯ
 # ============================================================
 MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"  # 1.5B, влезает в 8GB
-DATASET_FILE = "dataset_preflop_2.json"
-OUTPUT_DIR = "./lora_preflop_stage_2"
+DATASET_FILE = "dataset_combined.json"
+OUTPUT_DIR = "./lora_preflop_stage_3"
 MAX_SEQ_LEN = 512      # Префлоп-промпты короткие # Было 2048. Стало 512 Этого полностью хватит для префлоп-комбинаций!
 BATCH_SIZE = 1          # Маленький, чтобы влезть в память
 GRAD_ACCUM = 8          # Эффективный batch = 8
-LEARNING_RATE = 2e-4
+LEARNING_RATE = 2e-5
 NUM_EPOCHS = 3
 SAVE_STEPS = 200 # # Было 100. Делать проверку и сохранение в два раза реже
 # УВЕЛИЧЕНО: больше параметров LoRA

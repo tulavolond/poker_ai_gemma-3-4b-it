@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.5">
+<title>Покер: Человек против ИИ — v2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#ffd700;--panel:rgba(0,0,0,.85);--line:#444}
+html,body{height:100%}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+ color:#fff;font-size:clamp(12px,1.35vh,16px);padding:8px;touch-action:manipulation}
+.wrap{max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px}
+h3{color:var(--gold);font-size:1em;margin-bottom:6px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+.field{display:flex;flex-direction:column;flex:1 1 150px;min-width:0}
+.field label{font-size:.75em;color:#b9c6cc;margin-bottom:2px}
+input[type=number],input[type=text],select{width:100%;padding:6px 8px;border:1px solid var(--gold);border-radius:7px;
+ background:rgba(255,255,255,.08);color:#fff;font-size:.85em;min-width:0}
+.chk{display:flex;align-items:center;gap:5px;font-size:.8em;cursor:pointer}
+.chk input{width:16px;height:16px;accent-color:#4caf50;cursor:pointer}
+.btn{padding:8px 12px;border:2px solid transparent;border-radius:8px;font-weight:700;font-size:.8em;cursor:pointer;
+ text-transform:uppercase;color:#fff;background:#455a64;transition:transform .15s,opacity .15s}
+.btn:hover:not(:disabled){transform:translateY(-1px)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.fold{background:#d32f2f}.btn.check{background:#1976d2}.btn.call{background:#388e3c}.btn.raise{background:#f57c00}
+.btn.gold{background:linear-gradient(135deg,#b8860b,#ffd700);color:#000}
+.btn.ghost{background:linear-gradient(135deg,#2b5876,#4e4376)}
+.game{display:grid;grid-template-columns:minmax(0,1fr) clamp(230px,23vw,320px);gap:8px;position:relative}
+.table{position:relative;background:radial-gradient(ellipse at center,#1a5d1a,#0d3d0d 70%,#072707);
+ border:10px solid #4a2c17;border-radius:50%/45%;min-height:clamp(300px,54vh,620px);
+ box-shadow:inset 0 0 80px rgba(0,0,0,.6),0 12px 34px rgba(0,0,0,.7),0 0 0 3px #2a1810}
+.center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;
+ align-items:center;gap:6px;z-index:5;pointer-events:none;max-width:80%}
+.pot{background:linear-gradient(135deg,#ffd700,#b8860b);color:#000;padding:6px 18px;border-radius:20px;font-weight:800;
+ border:2px solid #fff;white-space:nowrap;box-shadow:0 4px 16px rgba(255,215,0,.45)}
+.board{display:flex;gap:5px;padding:6px 10px;background:rgba(0,0,0,.4);border-radius:10px;min-height:56px;align-items:center}
+.stage,.hnum{background:rgba(0,0,0,.7);padding:3px 12px;border-radius:10px;font-size:.75em;white-space:nowrap}
+.stage{color:var(--gold);border:1px solid var(--gold);font-weight:700}
+.hnum{color:#bbb}
+.card{width:clamp(30px,3.6vw,52px);height:clamp(42px,5.4vh,74px);background:#fff;border:1px solid #333;border-radius:6px;
+ display:flex;align-items:center;justify-content:center;font-weight:800;font-size:clamp(.7em,1.5vh,1.15em);
+ box-shadow:0 3px 8px rgba(0,0,0,.5);flex-shrink:0}
+.card.h,.card.d{color:#d32f37}.card.s,.card.c{color:#1a1a1a}
+.card.back{background:linear-gradient(135deg,#c41e3a,#8b0000);border-color:var(--gold);color:#fff}
+.card.back::before{content:'🂠';font-size:1.7em;opacity:.85}
+.card.hl{border:2px solid var(--gold);box-shadow:0 0 16px var(--gold)}
+.card.new{animation:deal .25s ease-out}
+@keyframes deal{from{transform:translateY(-22px) scale(.85);opacity:0}to{transform:none;opacity:1}}
+.seat{position:absolute;width:clamp(92px,12vw,160px);background:rgba(0,0,0,.85);border:2px solid #555;border-radius:12px;
+ padding:5px;text-align:center;transform:translate(-50%,-50%);transition:border-color .25s,box-shadow .25s,opacity .25s}
+.seat.me{border-color:#4caf50;background:rgba(10,50,10,.9)}
+.seat.turn{border-color:var(--gold);box-shadow:0 0 26px rgba(255,215,0,.8);z-index:10}
+.seat.win{border-color:var(--gold);background:linear-gradient(135deg,rgba(255,215,0,.28),rgba(255,140,0,.28));
+ box-shadow:0 0 40px rgba(255,215,0,.9)}
+.seat.fold{opacity:.32;filter:grayscale(75%)}
+.seat.out{display:none}
+.sname{font-size:.72em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sstack{font-size:.72em;color:var(--gold);font-weight:800}
+.scards{display:flex;gap:3px;justify-content:center;min-height:clamp(34px,5vh,60px);align-items:center}
+.scards .card{width:clamp(24px,3vw,42px);height:clamp(34px,4.6vh,60px);font-size:.65em}
+.shand{font-size:.6em;color:#7cfc90;font-weight:700;min-height:1.2em}
+.badge{display:inline-block;padding:0 4px;border-radius:8px;font-size:.62em;font-weight:800;margin-left:2px}
+.badge.D{background:#fff;color:#000}.badge.SB{background:#2196f3}.badge.BB{background:#ff5722}
+.bet{position:absolute;transform:translate(-50%,-50%);background:linear-gradient(135deg,#ff9800,#f57c00);
+ padding:2px 8px;border-radius:12px;font-size:.65em;font-weight:800;border:1px solid var(--gold);white-space:nowrap;
+ z-index:8;pointer-events:none;transition:opacity .2s}
+.bub{position:absolute;transform:translate(-50%,-50%);background:#fff;color:#000;padding:2px 8px;border-radius:12px;
+ font-size:.6em;font-weight:800;white-space:nowrap;z-index:9;border:1px solid #333;pointer-events:none;transition:opacity .2s}
+.bub.fold{background:#ffcdd2;color:#b71c1c}.bub.check{background:#bbdefb;color:#0d47a1}
+.bub.call{background:#c8e6c9;color:#1b5e20}.bub.raise{background:#fff59d;color:#e65100}
+.bub.think{background:#e1bee7;color:#4a148c}
+.hide{opacity:0}
+.hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);border:1px solid var(--gold);
+ color:var(--gold);padding:5px 16px;border-radius:18px;font-size:.75em;font-weight:700;z-index:30;white-space:nowrap;
+ opacity:0;transition:opacity .25s;pointer-events:none}
+.hint.on{opacity:1}
+.side{display:flex;flex-direction:column;gap:8px;min-height:0}
+.info{background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:9px;padding:8px;text-align:center;font-size:.75em}
+.info .big{font-size:1.5em;color:var(--gold);font-weight:800}
+.slider{width:100%;accent-color:#f57c00;cursor:pointer}
+.quick{display:flex;gap:4px}
+.quick .btn{flex:1;padding:5px 2px;font-size:.62em;background:#37474f}
+.bounds{display:flex;justify-content:space-between;font-size:.62em;color:#8fa0a8}
+.log{max-height:clamp(120px,20vh,300px);overflow-y:auto}
+.le{padding:3px 8px;margin:2px 0;border-left:3px solid var(--gold);background:rgba(255,255,255,.03);
+ font-size:.72em;border-radius:0 5px 5px 0;word-break:break-word}
+.le.info{border-color:#2196f3}.le.win{border-color:#4caf50;font-weight:700}
+.le.err{border-color:#f44336;background:rgba(244,67,54,.1)}
+.le.ai{border-color:#ff9800;color:#ffcc80;font-size:.66em}
+.chip{position:absolute;width:16px;height:16px;border-radius:50%;z-index:60;pointer-events:none;
+ background:radial-gradient(circle at 35% 30%,#ffe680,#d4a017 70%,#8a6508);box-shadow:0 2px 6px rgba(0,0,0,.6)}
+.gain{position:absolute;left:50%;top:-4px;transform:translateX(-50%);color:#7cfc90;font-weight:800;font-size:.75em;
+ z-index:70;pointer-events:none;animation:rise 1.1s ease-out forwards}
+@keyframes rise{0%{opacity:0;transform:translate(-50%,6px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-26px)}}
+.overlay{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:16px;
+ background:rgba(4,8,12,.85);backdrop-filter:blur(5px)}
+.overlay.on{display:flex}
+.modal{background:linear-gradient(160deg,#101a20,#0a0f13);border:1px solid rgba(255,215,0,.5);border-radius:14px;
+ padding:18px;max-width:min(1100px,96vw);max-height:90vh;overflow:auto}
+.modal h2{color:var(--gold);font-size:1.2em;margin-bottom:10px;text-align:center}
+.hrow{display:flex;align-items:center;justify-content:center;gap:10px;padding:6px 10px;border-radius:8px;
+ background:rgba(255,255,255,.05);margin:5px 0;flex-wrap:wrap;font-size:.85em}
+.hrow.w{background:rgba(255,215,0,.16);border:1px solid var(--gold)}
+.hrow .n{min-width:90px;text-align:right;font-weight:700}
+.hrow .r{min-width:130px;text-align:left;color:#7cfc90;font-weight:700}
+.hrow .cs{display:flex;gap:4px}
+table.stats{width:100%;border-collapse:collapse;font-size:.78em;min-width:900px}
+table.stats th{position:sticky;top:0;background:#14212a;color:var(--gold);text-align:left;padding:8px;white-space:nowrap}
+table.stats td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.06);white-space:nowrap}
+table.stats tr.me{background:rgba(76,175,80,.13)}
+.pos{color:#69f0ae;font-weight:700}.neg{color:#ff8a80;font-weight:700}
+.note{font-size:.7em;color:#ffab91;background:rgba(255,87,34,.1);border-left:3px solid #ff5722;padding:6px;border-radius:6px}
+@media(max-width:900px){.game{grid-template-columns:1fr}.table{min-height:340px}}
+    /* По умолчанию для всех устройств (телефоны, планшеты) — 100% */
+    body {
+      zoom: 100%;
+    }
+
+    /* Для ПК и ноутбуков (ширина экрана от 1025px и выше) — 150% */
+    @media (min-width: 1025px) {
+      body {
+        zoom: 140%;
+      }
+    }
+</style>
+</head>
+<body">
+<div class="wrap">
+
+  <div class="panel">
+    <h3>⚙️ Настройки</h3>
+    <div class="row">
+      <div class="field"><label>ИИ всего (1–8)</label><input type="number" id="aiCount" min="1" max="8" value="5"></div>
+      <div class="field"><label>Из них на сервере LLM</label><input type="number" id="srvCount" min="0" max="8" value="1"></div>
+      <div class="field" style="flex:2 1 240px"><label>URL сервера</label><input type="text" id="srvUrl" value="http://192.168.1.103:8899"></div>
+      <div class="field"><label>Таймаут, мс</label><input type="number" id="srvTimeout" min="1000" step="1000" value="20000"></div>
+      <div class="field"><label>Скорость</label><select id="speed">
+        <option value="1.6">Медленно</option><option value="1" selected>Обычно</option>
+        <option value="0.4">Быстро</option><option value="0.05">Турбо</option></select></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label class="chk"><input type="checkbox" id="showAll" checked>👁️ Открытые карты</label>
+      <label class="chk"><input type="checkbox" id="sound" checked>🔊 Звук</label>
+      <label class="chk"><input type="checkbox" id="train" checked>🧠 Онлайн-обучение (PUT)</label>
+      <button class="btn call" id="startBtn">🎮 Начать игру</button>
+      <button class="btn ghost" id="statsBtn">📊 Статистика</button>
+      <button class="btn ghost" id="jsonlBtn">⬇️ JSONL для LoRA</button>
+      <button class="btn ghost" id="testBtn">🧪 Тест движка</button>
+    </div>
+    <!-- <div class="note" style="margin-top:8px">Сервер вызывается последовательно (одна GPU). После 2 сбоев подряд — 30 с локального режима.
+      Страница по HTTPS не сможет ходить на HTTP-сервер: открывай файл локально или по HTTP.</div> -->
+  </div>
+
+  <div class="game">
+    <div class="table" id="table">
+      <div class="center">
+        <div class="hnum" id="hnum">Раздача #0</div>
+        <div class="pot" id="pot">Банк: $0</div>
+        <div class="board" id="board"></div>
+        <div class="stage" id="stage">Префлоп</div>
+      </div>
+      <div class="hint" id="hint"></div>
+    </div>
+
+    <div class="side">
+      <div class="panel">
+        <h3>🎯 Твой ход</h3>
+        <div class="info">
+          <div>Рука: <b id="myHand">—</b></div>
+          <div class="big" id="myEq">—</div>
+          <div id="myOdds" style="color:#b9c6cc">эквити / шансы банка</div>
+        </div>
+        <div style="margin:8px 0">
+          <div class="bounds"><span>Рейз до: <b id="raiseVal" style="color:var(--gold)">$0</b></span><span id="raiseMax">max $0</span></div>
+          <input type="range" class="slider" id="raiseSlider" min="0" max="100" step="5" value="0" disabled>
+          <div class="quick">
+            <button class="btn" data-q="0.5">½ банка</button><button class="btn" data-q="0.75">¾</button>
+            <button class="btn" data-q="1">Банк</button><button class="btn" data-q="all">Ва-банк</button>
+          </div>
+        </div>
+        <div class="row" style="gap:5px">
+          <button class="btn fold" id="bFold" style="flex:1" disabled>Фолд (F)</button>
+          <button class="btn check" id="bCheck" style="flex:1" disabled>Чек (C)</button>
+        </div>
+        <div class="row" style="gap:5px;margin-top:5px">
+          <button class="btn call" id="bCall" style="flex:1" disabled>Колл (K)</button>
+          <button class="btn raise" id="bRaise" style="flex:1" disabled>Рейз (R)</button>
+        </div>
+        <button class="btn" id="bAuto" style="width:100%;margin-top:5px" disabled>⏭ Авто чек/фолд</button>
+      </div>
+      <div class="panel" style="font-size:.72em">
+        <div>ИИ-сервер: <b id="aiStatus">ожидание</b></div>
+        <div>Буфер обучения: <b id="aiBuf">—</b> | W/L: <b id="aiWL">—</b></div>
+        <div>Сэмплов в JSONL: <b id="aiSamples">0</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel log"><h3>📜 История</h3><div id="log"></div></div>
+</div>
+
+<div class="overlay" id="sdOverlay"><div class="modal" id="sdModal"></div></div>
+<div class="overlay" id="stOverlay"><div class="modal" style="width:min(1100px,96vw)">
+  <h2>📊 Статистика игроков</h2>
+  <div class="row" style="margin-bottom:8px">
+    <button class="btn ghost" id="stExport">⬇️ Экспорт</button>
+    <button class="btn fold" id="stReset">🗑️ Сброс</button>
+    <button class="btn" id="stClose" style="margin-left:auto">✕ Закрыть</button>
+  </div>
+  <div style="overflow:auto"><table class="stats"><thead><tr>
+    <th>Игрок</th><th>Раздачи</th><th>Победы</th><th>Win%</th><th>Выиграно</th><th>Net</th>
+    <th>Рекорд</th><th>Вскрытия</th><th>Фолды</th><th>Ва-банки</th><th>Выбыв.</th><th>Турниры</th><th>Лучшая рука</th>
+  </tr></thead><tbody id="stBody"></tbody></table></div>
+</div></div>
+
+<script>
+"use strict";
+/* =========================================================================
+   0. УТИЛИТЫ
+   ========================================================================= */
+const $ = s => document.querySelector(s);
+const clamp = (v,a,b) => Math.min(b, Math.max(a,v));
+const money = n => '$' + Math.round(n).toLocaleString('ru-RU');
+const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function mulberry32(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+ t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function pause(ms, sig){
+  const d = Math.max(0, ms * CFG.speed);
+  return new Promise(res=>{
+    if (sig?.aborted || d===0) return res();
+    const t = setTimeout(done, d);
+    function done(){ clearTimeout(t); sig?.removeEventListener('abort', done); res(); }
+    sig?.addEventListener('abort', done, {once:true});
+  });
+}
+function log(msg, type=''){
+  const c=$('#log'); const e=document.createElement('div');
+  e.className='le '+type; e.textContent=msg; c.insertBefore(e,c.firstChild);
+  while(c.children.length>200) c.removeChild(c.lastChild);
+}
+
+/* =========================================================================
+   1. КАРТЫ + БЫСТРЫЙ ОЦЕНЩИК (O(7), без перебора 21 комбинации)
+   ========================================================================= */
+const SUITS=['♠','♥','♦','♣'], SCLS=['s','h','d','c'];
+const RNAME={11:'J',12:'Q',13:'K',14:'A'};
+const cRank = c => (c>>2)+2, cSuit = c => c&3;
+const cStr  = c => (RNAME[cRank(c)]||cRank(c)) + SUITS[cSuit(c)];
+function cParse(s){
+  const r={'T':10,'J':11,'Q':12,'K':13,'A':14}[s[0]] || parseInt(s[0],10);
+  return (r-2)*4 + SUITS.indexOf(s[1]);
+}
+const handOf = s => s.trim().split(/\s+/).map(cParse);
+function newDeck(rng){
+  const d=[...Array(52).keys()];
+  for(let i=51;i>0;i--){const j=Math.floor(rng()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+  return d;
+}
+// Таблица: 13-битная маска номиналов -> старшая карта лучшего стрита (0 = нет)
+const STR8192 = new Int8Array(8192);
+for(let m=0;m<8192;m++){
+  let hi=0;
+  for(let h=14;h>=6;h--){
+    let ok=true;
+    for(let r=h-4;r<=h;r++) if(!(m&(1<<(r-2)))){ok=false;break;}
+    if(ok){hi=h;break;}
+  }
+  if(!hi && (m&0x100F)===0x100F) hi=5;      // «колесо» A-2-3-4-5
+  STR8192[m]=hi;
+}
+const P15=[1,15,225,3375,50625,759375];
+const pack=(cat,t)=>{let s=cat*P15[5];for(let i=0;i<5;i++)s+=(t[i]||0)*P15[4-i];return s;};
+function topExcept(rc,ex,n){
+  const out=[];
+  for(let r=14;r>=2&&out.length<n;r--) if(rc[r]>0 && ex.indexOf(r)<0) out.push(r);
+  while(out.length<n) out.push(0);
+  return out;
+}
+/** Оценка 5..7 карт. Чем больше число — тем сильнее рука. */
+function evalHand(cards){
+  const rc=new Uint8Array(15), sc=new Uint8Array(4), sm=[0,0,0,0];
+  let mask=0;
+  for(let i=0;i<cards.length;i++){
+    const c=cards[i], r=cRank(c), s=cSuit(c);
+    rc[r]++; sc[s]++; mask|=1<<(r-2); sm[s]|=1<<(r-2);
+  }
+  let fs=-1;
+  for(let s=0;s<4;s++) if(sc[s]>=5) fs=s;
+  if(fs>=0){ const h=STR8192[sm[fs]]; if(h) return pack(8,[h]); }        // стрит-флеш
+  let q=0,tA=0,tB=0,pA=0,pB=0;
+  for(let r=14;r>=2;r--){
+    const n=rc[r];
+    if(n===4) q=q||r;
+    else if(n===3){ if(!tA) tA=r; else tB=tB||r; }
+    else if(n===2){ if(!pA) pA=r; else pB=pB||r; }
+  }
+  if(q) return pack(7,[q, topExcept(rc,[q],1)[0]]);
+  if(tA && (tB||pA)) return pack(6,[tA, tB||pA]);
+  if(fs>=0){
+    const t=[]; for(let r=14;r>=2&&t.length<5;r--) if(sm[fs]&(1<<(r-2))) t.push(r);
+    return pack(5,t);
+  }
+  const st=STR8192[mask]; if(st) return pack(4,[st]);
+  if(tA) return pack(3,[tA,...topExcept(rc,[tA],2)]);
+  if(pA&&pB) return pack(2,[pA,pB, topExcept(rc,[pA,pB],1)[0]]);
+  if(pA) return pack(1,[pA,...topExcept(rc,[pA],3)]);
+  return pack(0, topExcept(rc,[],5));
+}
+const CAT=['Старшая карта','Пара','Две пары','Сет','Стрит','Флеш','Фулл-хаус','Каре','Стрит-флеш'];
+const catOf = s => Math.floor(s/P15[5]);
+function handName(score){
+  const c=catOf(score);
+  if(c===8) return Math.floor((score%P15[5])/P15[4])===14 ? 'Роял-флеш' : 'Стрит-флеш';
+  return CAT[c];
+}
+function combos5(arr){
+  const out=[],c=[];
+  (function bt(s){ if(c.length===5){out.push([...c]);return;}
+    for(let i=s;i<arr.length;i++){c.push(arr[i]);bt(i+1);c.pop();} })(0);
+  return out;
+}
+/** Медленный путь только для подсветки: лучшие 5 карт (при равенстве — меньше карманных). */
+function best5(all, hole){
+  const hs=new Set(hole); let bs=-1,bc=[],used=99;
+  for(const c of combos5(all)){
+    const s=evalHand(c);
+    const u=c.filter(x=>hs.has(x)).length;
+    if(s>bs || (s===bs && u<used)){bs=s;bc=c;used=u;}
+  }
+  return {score:bs, cards:bc};
+}
+/** Монте-Карло эквити против nOpp случайных рук (доли ничьих учтены). */
+function equity(hole, board, nOpp, iters, rng){
+  if(nOpp<=0) return 1;
+  const used=new Uint8Array(52);
+  hole.forEach(c=>used[c]=1); board.forEach(c=>used[c]=1);
+  const rest=[]; for(let c=0;c<52;c++) if(!used[c]) rest.push(c);
+  const need=(5-board.length)+2*nOpp;
+  if(need>rest.length) return 0.5;
+  const hero=new Array(7), opp=new Array(7);
+  let wins=0, fixedHero=null;
+  if(board.length===5){ for(let i=0;i<2;i++)hero[i]=hole[i]; for(let i=0;i<5;i++)hero[2+i]=board[i]; fixedHero=evalHand(hero); }
+  for(let it=0;it<iters;it++){
+    for(let i=0;i<need;i++){ const j=i+Math.floor(rng()*(rest.length-i)); const t=rest[i];rest[i]=rest[j];rest[j]=t; }
+    let p=0, hs=fixedHero;
+    if(hs===null){
+      for(let i=0;i<2;i++) hero[i]=hole[i];
+      for(let i=0;i<5-board.length;i++) hero[2+i]=rest[p++];
+      for(let i=0;i<board.length;i++) hero[2+(5-board.length)+i]=board[i];
+      hs=evalHand(hero);
+    }
+    let better=false, ties=0;
+    for(let o=0;o<nOpp;o++){
+      opp[0]=rest[p++]; opp[1]=rest[p++];
+      for(let i=0;i<5;i++) opp[2+i]= board.length===5 ? board[i] : hero[2+i];
+      const os=evalHand(opp);
+      if(os>hs){better=true;break;} else if(os===hs) ties++;
+    }
+    if(!better) wins += 1/(ties+1);
+  }
+  return wins/iters;
+}
+function boardTexture(board){
+  if(board.length<3) return {txt:'—', danger:0};
+  const sc=[0,0,0,0], rc=new Uint8Array(15); let mask=0;
+  board.forEach(c=>{sc[cSuit(c)]++;rc[cRank(c)]++;mask|=1<<(cRank(c)-2);});
+  const maxSuit=Math.max(...sc), paired=Object.values(rc).some(v=>v>=2);
+  let conn=0;
+  for(let h=6;h<=14;h++){let n=0;for(let r=h-4;r<=h;r++) if(mask&(1<<(r-2)))n++;conn=Math.max(conn,n);}
+  let d=0, tags=[];
+  if(maxSuit>=3){d+=.3;tags.push('флеш');} else if(maxSuit===2){d+=.1;tags.push('флеш-дро');}
+  if(conn>=3){d+=.25;tags.push('стрит');}
+  if(paired){d+=.15;tags.push('спарен');}
+  return {txt:(d>=.5?'WET':d>=.25?'SEMI-WET':'DRY')+(tags.length?' ('+tags.join(', ')+')':''), danger:d};
+}
+
+/* =========================================================================
+   2. ДВИЖОК ИГРЫ — чистая логика, никакого DOM
+   ========================================================================= */
+const STREETS=['Префлоп','Флоп','Тёрн','Ривер'];
+function newPlayer(name, stack, isHuman, style, useServer){
+  return {name,stack,isHuman,style,useServer,out:false,
+    cards:[],bet:0,total:0,folded:false,acted:false,actedBet:0,act:null,
+    handName:'',best:[],winner:false,samples:[]};
+}
+class Game{
+  constructor(players,{sb=5,bb=10,start=1000,rng=Math.random}={}){
+    this.players=players; this.sbAmt=sb; this.bbAmt=bb; this.start=start; this.rng=rng;
+    this.button=0; this.handNo=0; this.board=[]; this.street=0; this.pot=0;
+    this.curBet=0; this.lastFull=bb; this.cursor=0; this.handOver=true; this.history=[];
+  }
+  alive(){ return this.players.filter(p=>!p.out); }
+  inHand(){ return this.players.filter(p=>!p.out && !p.folded); }
+  chipTotal(){ return this.players.reduce((s,p)=>s+p.stack,0)+this.pot; }
+  nextAliveIdx(from){
+    const n=this.players.length;
+    for(let k=1;k<=n;k++){const i=(from+k)%n; if(!this.players[i].out) return i;}
+    return from;
+  }
+  positionOf(p){
+    const order=[]; const n=this.players.length;
+    for(let k=0;k<n;k++){const q=this.players[(this.button+k)%n]; if(!q.out) order.push(q);}
+    const i=order.indexOf(p), len=order.length;
+    if(len===2) return i===0?'BTN/SB':'BB';
+    if(i===0)return'BTN'; if(i===1)return'SB'; if(i===2)return'BB';
+    const rest=len-3, pos=i-3;
+    if(pos===rest-1)return'CO'; if(pos===rest-2&&rest>2)return'HJ';
+    if(pos===0)return'UTG'; if(pos===1&&rest>4)return'UTG+1';
+    return 'MP';
+  }
+  startHand(){
+    if(this.alive().length<2) throw new Error('Меньше двух живых игроков');
+    this.button = this.handNo===0 ? this.nextAliveIdx(this.players.length-1) : this.nextAliveIdx(this.button);
+    this.handNo++;
+    this.board=[]; this.street=0; this.pot=0; this.curBet=this.bbAmt; this.lastFull=this.bbAmt;
+    this.handOver=false; this.history=[]; this.deck=newDeck(this.rng);
+    for(const p of this.players){
+      p.cards=[];p.bet=0;p.total=0;p.folded=p.out;p.acted=false;p.actedBet=0;p.act=null;
+      p.handName='';p.best=[];p.winner=false;p.samples=[];p._aiCounted=false;
+    }
+    const two=this.alive().length===2;
+    this.sbIdx = two ? this.button : this.nextAliveIdx(this.button);
+    this.bbIdx = this.nextAliveIdx(this.sbIdx);
+    // раздача по кругу от SB, два круга
+    let idx=this.sbIdx;
+    for(let round=0;round<2;round++){
+      for(let k=0;k<this.players.length;k++){
+        const p=this.players[idx];
+        if(!p.out) p.cards.push(this.deck.pop());
+        idx=(idx+1)%this.players.length;
+      }
+    }
+    this.post(this.players[this.sbIdx], this.sbAmt);
+    this.post(this.players[this.bbIdx], this.bbAmt);
+    // BB остаётся полной ставкой даже если блайндер ва-банк на меньшую сумму
+    this.curBet=this.bbAmt; this.lastFull=this.bbAmt;
+    this.cursor=(this.bbIdx+1)%this.players.length;
+    this.events=[`Блайнды: ${this.players[this.sbIdx].name} ${money(this.players[this.sbIdx].bet)}, `+
+                 `${this.players[this.bbIdx].name} ${money(this.players[this.bbIdx].bet)}`];
+  }
+  post(p,amt){
+    const a=Math.min(amt,p.stack);
+    p.stack-=a; p.bet=a; p.total+=a; this.pot+=a;
+  }
+  needsAction(p){ return !p.out && !p.folded && p.stack>0 && (!p.acted || p.bet<this.curBet); }
+  nextActor(){
+    if(this.handOver) return null;
+    const canAct=this.players.filter(p=>!p.out&&!p.folded&&p.stack>0);
+    if(canAct.length===0) return null;
+    if(canAct.length===1 && canAct[0].bet>=this.curBet) return null;   // все остальные ва-банк
+    const n=this.players.length;
+    for(let k=0;k<n;k++){ const p=this.players[(this.cursor+k)%n]; if(this.needsAction(p)) return p; }
+    return null;
+  }
+  legal(p){
+    const toCall=Math.max(0, Math.min(this.curBet-p.bet, p.stack));
+    const maxTo=p.bet+p.stack;
+    // торги переоткрыты, если с момента нашего действия суммарный рейз >= последнего полного
+    const reopened = !p.acted || (this.curBet - p.actedBet) >= this.lastFull;
+    return {toCall, canCheck:this.curBet<=p.bet, canRaise:maxTo>this.curBet && reopened,
+            minTo:Math.min(this.curBet+this.lastFull, maxTo), maxTo};
+  }
+  act(p, action, amount){
+    const L=this.legal(p);
+    let a=String(action||'').toLowerCase();
+    if(a==='bet') a='raise';
+    if(a==='allin'||a==='all-in'){ a = L.maxTo>this.curBet ? 'raise':'call'; amount=L.maxTo; }
+    if(a==='fold' && L.canCheck) a='check';                 // бесплатный фолд не имеет смысла
+    if(a==='check' && !L.canCheck) a='call';
+    if(a==='call' && L.toCall===0) a='check';
+    if(a==='raise' && !L.canRaise) a = L.toCall>0?'call':'check';
+    let paid=0, raised=false;
+    if(a==='fold'){ p.folded=true; p.act={t:'fold',text:'ФОЛД'}; }
+    else if(a==='check'){ p.act={t:'check',text:'ЧЕК'}; }
+    else if(a==='call'){
+      paid=L.toCall; p.stack-=paid; p.bet+=paid; p.total+=paid; this.pot+=paid;
+      p.act={t:'call',text: p.stack===0?`КОЛЛ ва-банк ${money(paid)}`:`КОЛЛ ${money(paid)}`};
+    } else {
+      const target=clamp(Math.round(amount)||0, L.minTo, L.maxTo);
+      if(target<=this.curBet){
+        paid=L.toCall; p.stack-=paid; p.bet+=paid; p.total+=paid; this.pot+=paid;
+        p.act={t:'call',text:`КОЛЛ ${money(paid)}`};
+      } else {
+        paid=target-p.bet; p.stack-=paid; p.bet=target; p.total+=paid; this.pot+=paid;
+        const inc=target-this.curBet;
+        if(inc>=this.lastFull) this.lastFull=inc;           // короткий ва-банк НЕ увеличивает min-raise
+        this.curBet=target; raised=true;
+        p.act={t:'raise',text: p.stack===0?`ВА-БАНК ${money(target)}`:`РЕЙЗ до ${money(target)}`};
+      }
+    }
+    p.acted=true; p.actedBet=this.curBet;
+    this.cursor=(this.players.indexOf(p)+1)%this.players.length;
+    this.history.push({street:STREETS[this.street], name:p.name, pos:this.positionOf(p),
+                       action:a, to:raised?p.bet:0, call:paid});
+    if(this.inHand().length<=1) this.handOver=true;
+    return {action:a, paid, raised};
+  }
+  dealStreet(){
+    this.street++;
+    const n = this.street===1?3:1;
+    this.deck.pop();                                       // бёрн
+    for(let i=0;i<n;i++) this.board.push(this.deck.pop());
+    this.curBet=0; this.lastFull=this.bbAmt;
+    for(const p of this.players){ p.bet=0; p.acted=false; p.actedBet=0; if(!p.folded&&!p.out) p.act=null; }
+    this.cursor=(this.button+1)%this.players.length;
+  }
+  refundUncalled(){
+    const list=this.players.filter(p=>!p.out&&p.total>0).sort((a,b)=>b.total-a.total);
+    if(list.length>=2 && !list[0].folded){
+      const ex=list[0].total-list[1].total;
+      if(ex>0){ list[0].stack+=ex; list[0].total-=ex; this.pot-=ex;
+        this.events.push(`↩️ ${list[0].name}: возврат незакрытой ставки ${money(ex)}`); }
+    }
+  }
+  sidePots(){
+    const cs=this.players.filter(p=>!p.out&&p.total>0).map(p=>({p,amt:p.total})).sort((a,b)=>a.amt-b.amt);
+    const raw=[]; let prev=0;
+    for(let i=0;i<cs.length;i++){
+      const diff=cs[i].amt-prev; if(diff<=0) continue;
+      const parts=cs.slice(i).map(x=>x.p);
+      raw.push({amount:diff*parts.length, eligible:parts.filter(p=>!p.folded)});
+      prev=cs[i].amt;
+    }
+    const merged=[];
+    for(const pot of raw){
+      const last=merged[merged.length-1];
+      const same=last && last.eligible.length===pot.eligible.length && last.eligible.every(p=>pot.eligible.includes(p));
+      if(same) last.amount+=pot.amount; else merged.push({amount:pot.amount, eligible:[...pot.eligible]});
+    }
+    return merged;
+  }
+  awardUncontested(){
+    this.refundUncalled();
+    const w=this.inHand()[0]; const amt=this.pot;
+    w.stack+=amt; this.pot=0; this.handOver=true; w.winner=true;
+    this.players.forEach(p=>{ if(p.stack<=0) p.out=true; });
+    return {winner:w, amount:amt};
+  }
+  settle(){
+    this.refundUncalled();
+    const active=this.inHand();
+    const scores=new Map(), bestc=new Map();
+    active.forEach(p=>{
+      const r=best5([...p.cards,...this.board], p.cards);
+      scores.set(p,r.score); bestc.set(p,r.cards);
+      p.handName=handName(r.score); p.best=r.cards;
+    });
+    const pots=this.sidePots();
+    const N=this.players.length;
+    const seatAfter=p=>(this.players.indexOf(p)-this.button-1+2*N)%N;
+    const winners=new Set(), payouts=[], events=[];
+    pots.forEach((pot,i)=>{
+      if(!pot.eligible.length) pot.eligible=active;
+      let bs=-1, ws=[];
+      for(const p of pot.eligible){
+        const s=scores.get(p);
+        if(s>bs){bs=s;ws=[p];} else if(s===bs) ws.push(p);
+      }
+      ws.sort((a,b)=>seatAfter(a)-seatAfter(b));            // нечётная фишка — слева от баттона
+      const share=Math.floor(pot.amount/ws.length), rem=pot.amount-share*ws.length;
+      const name=i===0?'Main':'Side '+i;
+      const list=[];
+      ws.forEach((w,k)=>{
+        const amt=share+(k<rem?1:0);
+        w.stack+=amt; winners.add(w); w.winner=true;
+        payouts.push({player:w,amount:amt}); list.push({player:w,amount:amt});
+      });
+      events.push({name, amount:pot.amount, winners:list});
+    });
+    this.pot=0; this.handOver=true;
+    this.players.forEach(p=>{ if(p.stack<=0) p.out=true; });
+    return {pots,payouts,winners,scores,bestc,events,active};
+  }
+}
+
+/* =========================================================================
+   3. ЛОКАЛЬНЫЙ ИИ (эквити + pot odds + текстура + стиль)
+   ========================================================================= */
+const STYLES=[
+ {name:'АГРЕССИВНЫЙ',raise:.58,bluff:.14,foldBig:.30,agg:.75},
+ {name:'ТАЙТОВЫЙ',   raise:.68,bluff:.03,foldBig:.85,agg:.45},
+ {name:'ЛУЗОВЫЙ',    raise:.52,bluff:.10,foldBig:.20,agg:.55},
+ {name:'ОСТОРОЖНЫЙ', raise:.60,bluff:.06,foldBig:.60,agg:.40},
+ {name:'ХИТРЫЙ',     raise:.52,bluff:.24,foldBig:.40,agg:.60},
+ {name:'МАТЕМАТИК',  raise:.55,bluff:.05,foldBig:.50,agg:.50},
+ {name:'БЕЗУМНЫЙ',   raise:.44,bluff:.30,foldBig:.15,agg:.85},
+ {name:'ПРОФЕССИОНАЛ',raise:.62,bluff:.12,foldBig:.55,agg:.65}
+];
+function localDecision(g,p,iters=400){
+  const L=g.legal(p), st=p.style||STYLES[0];
+  const opp=g.inHand().length-1;
+  let eq=equity(p.cards,g.board,Math.max(1,opp),iters,Math.random);
+  eq=clamp(eq*(0.96+Math.random()*0.08),0,1);
+  const odds=L.toCall>0 ? L.toCall/(g.pot+L.toCall) : 0;
+  const tex=boardTexture(g.board);
+  const big=L.toCall>p.stack*0.45;
+  if(L.toCall>0){
+    if(big && eq<0.72 && Math.random()<st.foldBig) return {action:'fold',amount:0};
+    if(eq < odds*1.05 && eq<0.5) return {action:'fold',amount:0};
+  }
+  if(L.canRaise){
+    const value = eq>=st.raise || (opp===1 && eq>=st.raise-0.10);
+    const bluff = L.toCall===0 && tex.danger<0.3 && Math.random()<st.bluff;
+    if(value||bluff){
+      const frac = bluff?0.45:(0.5+st.agg*0.6);
+      const target = Math.round(g.curBet + Math.max(g.bbAmt, (g.pot+L.toCall)*frac));
+      return {action:'raise', amount:clamp(target,L.minTo,L.maxTo)};
+    }
+  }
+  if(L.toCall===0) return {action:'check',amount:0};
+  return {action: eq>=odds ? 'call':'fold', amount:L.toCall};
+}
+
+/* =========================================================================
+   4. СЕРВЕРНЫЙ ИИ: честный промпт + строгий парсер + circuit breaker
+   ========================================================================= */
+const SRV={fails:0, disabledUntil:0, lastMs:0};
+const samples=[];                                          // JSONL для LoRA
+function srvAvailable(){ return CFG.srvCount>0 && Date.now()>SRV.disabledUntil; }
+async function srvFetch(path, opts, timeout){
+  const ctl=new AbortController();
+  const t=setTimeout(()=>ctl.abort(), timeout);
+  try{ return await fetch(CFG.url.replace(/\/$/,'')+path, {...opts, signal:ctl.signal}); }
+  finally{ clearTimeout(t); }
+}
+function holeDesc(cards){
+  const [a,b]=cards.map(cRank).sort((x,y)=>y-x);
+  const suited=cSuit(cards[0])===cSuit(cards[1]);
+  const n=r=>RNAME[r]||r;
+  if(a===b) return `Карманная пара ${n(a)}${n(b)}`;
+  return `${n(a)}${n(b)} ${suited?'одномастные':'разномастные'}${a-b===1?', коннектор':''}`;
+}
+function historyText(g){
+  if(!g.history.length) return 'Действий ещё не было (только блайнды)';
+  const out=[]; let cur='';
+  for(const h of g.history){
+    if(h.street!==cur){cur=h.street;out.push(cur+':');}
+    const d = h.action==='raise'?`RAISE до $${h.to}` : h.action==='call'?`CALL $${h.call}` : h.action.toUpperCase();
+    out.push(`  ${h.name} (${h.pos}) ${d}`);
+  }
+  return out.join('\n');
+}
+function buildPrompt(g,p){
+  const L=g.legal(p), opp=g.inHand().length-1;
+  const eq=equity(p.cards,g.board,Math.max(1,opp),500,Math.random);
+  const odds=L.toCall>0 ? L.toCall/(g.pot+L.toCall) : 0;
+  const tex=boardTexture(g.board);
+  const made=g.board.length>=3 ? handName(evalHand([...p.cards,...g.board])) : holeDesc(p.cards);
+  const acts=['FOLD'];
+  if(L.canCheck) acts.push('CHECK'); else acts.push(`CALL $${L.toCall}`);
+  if(L.canRaise) acts.push(`RAISE от $${L.minTo} до $${L.maxTo}`);
+  const opps=g.inHand().filter(x=>x!==p).map(x=>`${x.name} ${money(x.stack)}${x.stack===0?' (ва-банк)':''}`).join('; ')||'нет';
+  const styleTxt=`${p.style.name}: рейз при эквити > ${(p.style.raise*100)|0}%, блеф ${(p.style.bluff*100)|0}%, `+
+                 `фолд к крупной ставке ${(p.style.foldBig*100)|0}%`;
+  return `[СТАДИЯ: ${STREETS[g.street].toUpperCase()}]
+=== ИСТОРИЯ РАЗДАЧИ ===
+${historyText(g)}
+=== ТВОИ КАРТЫ ===
+${p.cards.map(cStr).join(', ')}
+=== БОРД (${g.board.length} карт) ===
+${g.board.length?g.board.map(cStr).join(', '):'—'}
+=== АНАЛИЗ СИСТЕМЫ ===
+Комбинация: ${made}
+Эквити против ${opp} случайных рук: ${(eq*100).toFixed(0)}%
+Шансы банка: для колла нужно ${(odds*100).toFixed(0)}%
+Текстура борда: ${tex.txt}
+=== КОНТЕКСТ ===
+Позиция: ${g.positionOf(p)} | Стек: $${p.stack} | Банк: $${g.pot} | Колл: $${L.toCall}
+Оппоненты в раздаче: ${opps}
+Твой стиль: ${styleTxt}
+=== ДОСТУПНЫЕ ДЕЙСТВИЯ (только эти!) ===
+${acts.join(' | ')}
+Ответь СТРОГО тремя строками, без пояснений:
+АНАЛИЗ: [одно предложение с числами]
+ДЕЙСТВИЕ: [${L.canCheck?'FOLD/CHECK':'FOLD/CALL'}${L.canRaise?'/RAISE':''}]
+СУММА: [число, 0 для FOLD/CHECK]`;
+}
+const ACT_RE=/(?:ДЕЙСТВИЕ|ACTION)\s*[:\-]?\s*(FOLD|CHECK|CALL|BET|RAISE|ALL[\s\-]?IN|ПАС|ФОЛД|ЧЕК|КОЛЛ|РЕЙЗ|ВА-?БАНК)/i;
+const AMT_RE=/(?:СУММА|AMOUNT|SIZE)\s*[:\-]?\s*\$?\s*(\d[\d\s.,]*)/i;
+const RU_ACT={'ПАС':'FOLD','ФОЛД':'FOLD','ЧЕК':'CHECK','КОЛЛ':'CALL','РЕЙЗ':'RAISE','ВАБАНК':'ALLIN','ВА-БАНК':'ALLIN'};
+function parseResponse(text,g,p){
+  const L=g.legal(p);
+  let m=(text||'').match(ACT_RE);
+  let a = m ? m[1].toUpperCase().replace(/[\s\-]/g,'') : null;
+  if(a && RU_ACT[a]) a=RU_ACT[a];
+  if(!a){                                                  // запасной поиск по всему тексту
+    const t=(text||'').toUpperCase();
+    a = /\bRAISE\b|\bBET\b/.test(t)?'RAISE' : /\bCALL\b/.test(t)?'CALL' : /\bCHECK\b/.test(t)?'CHECK':'FOLD';
+  }
+  const am=(text||'').match(AMT_RE);
+  let amount = am ? parseInt(am[1].replace(/[^\d]/g,''),10)||0 : 0;
+  if(a==='BET') a='RAISE';
+  if(a==='ALLIN'){ a = L.maxTo>g.curBet?'RAISE':'CALL'; amount=L.maxTo; }
+  if(a==='RAISE'){
+    if(!L.canRaise) a = L.toCall>0?'CALL':'CHECK';
+    else amount = clamp(amount||L.minTo, L.minTo, L.maxTo);  // порядок важен: сначала min, потом max
+  }
+  if(a==='CALL'){ if(L.toCall===0) a='CHECK'; else amount=L.toCall; }
+  if(a==='CHECK' && !L.canCheck) a='CALL';
+  if(a==='FOLD' && L.canCheck) a='CHECK';
+  if(a!=='RAISE') amount=0;
+  return {action:a.toLowerCase(), amount};
+}
+async function serverDecision(g,p,sig){
+  const prompt=buildPrompt(g,p);
+  const t0=performance.now();
+  try{
+    const r=await srvFetch('', {method:'POST',headers:{'Content-Type':'application/json; charset=utf-8'},
+      body:JSON.stringify({prompt, stage:STREETS[g.street], max_tokens:200, temperature:0.6, stop:['\n\n','=== ']})}, CFG.timeout);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const text = d.response ?? d.text ?? d.content ?? d.choices?.[0]?.text ?? '';
+    if(!text) throw new Error('пустой ответ');
+    SRV.fails=0; SRV.lastMs=Math.round(performance.now()-t0);
+    const dec=parseResponse(text,g,p);
+    p.samples.push({prompt, response:text, action:dec.action, amount:dec.amount,
+      stage:STREETS[g.street], player:p.name, style:p.style.name,
+      pot:g.pot, stack:p.stack, to_call:g.legal(p).toCall, board:g.board.map(cStr), hole:p.cards.map(cStr)});
+    log(`🤖 ${p.name} (${p.style.name}): ${dec.action.toUpperCase()} ${dec.amount?money(dec.amount):''} · ${Math.floor(SRV.lastMs / 1000)} с [СЕРВЕР]`,'ai');
+    return dec;
+  }catch(e){
+    SRV.fails++;
+    if(SRV.fails>=2){ SRV.disabledUntil=Date.now()+30000; SRV.fails=0;
+      log('⚠️ Сервер недоступен — 30 с локального режима ('+e.message+')','err'); }
+    const d=localDecision(g,p,300);
+    log(`🤖 ${p.name}: ${d.action.toUpperCase()} [ЛОКАЛЬНЫЙ fallback]`,'ai');
+    return d;
+  }
+}
+async function askAI(g,p,sig){
+  p.act={t:'think',text:'🧠 думает...'}; render();
+  if(p.useServer && srvAvailable()) return await serverDecision(g,p,sig);
+  await pause(250,sig);
+  const d=localDecision(g,p);
+  log(`🤖 ${p.name} (${p.style.name}): ${d.action.toUpperCase()} ${d.amount?money(d.amount):''}`,'ai');
+  return d;
+}
+
+/* =========================================================================
+   5. КОНФИГ + СТАТИСТИКА (localStorage)
+   ========================================================================= */
+const CKEY='poker2.cfg', SKEY='poker2.stats';
+const CFG={ai:5,srvCount:1,url:'http://192.168.1.103:8899',timeout:20000,speed:1,showAll:true,sound:true,train:true};
+function loadCfg(){
+  try{ Object.assign(CFG, JSON.parse(localStorage.getItem(CKEY)||'{}')); }catch(e){}
+  $('#aiCount').value=CFG.ai; $('#srvCount').value=CFG.srvCount; $('#srvUrl').value=CFG.url;
+  $('#srvTimeout').value=CFG.timeout; $('#speed').value=String(CFG.speed);
+  $('#showAll').checked=CFG.showAll; $('#sound').checked=CFG.sound; $('#train').checked=CFG.train;
+}
+function readCfg(){
+  CFG.ai=clamp(parseInt($('#aiCount').value)||5,1,8);
+  CFG.srvCount=clamp(parseInt($('#srvCount').value)||0,0,CFG.ai);
+  CFG.url=$('#srvUrl').value.trim();
+  CFG.timeout=clamp(parseInt($('#srvTimeout').value)||20000,1000,120000);
+  CFG.speed=parseFloat($('#speed').value)||1;
+  CFG.showAll=$('#showAll').checked; CFG.sound=$('#sound').checked; CFG.train=$('#train').checked;
+  $('#srvCount').value=CFG.srvCount;
+  try{ localStorage.setItem(CKEY, JSON.stringify(CFG)); }catch(e){}
+}
+let STATS={players:{},updatedAt:0};
+const blank=n=>({name:n,hands:0,wins:0,won:0,net:0,biggest:0,showdowns:0,sdWins:0,foldWins:0,
+  folds:0,allIns:0,outs:0,games:0,gameWins:0,bestCat:-1,bestName:'—'});
+const st=n=>STATS.players[n]||(STATS.players[n]=blank(n));
+function loadStats(){ try{ const d=JSON.parse(localStorage.getItem(SKEY)||'null'); if(d?.players) STATS=d; }catch(e){} }
+function saveStats(){ STATS.updatedAt=Date.now(); try{ localStorage.setItem(SKEY,JSON.stringify(STATS)); }catch(e){} }
+let handStart=new Map();
+function noteHandStart(g){
+  handStart=new Map();
+  g.players.forEach(p=>{ if(!p.out){ handStart.set(p,p.stack); st(p.name).hands++; } });
+}
+function noteOutcome(g,kind,winners,payouts){
+  const gross=new Map();
+  payouts.forEach(x=>gross.set(x.player,(gross.get(x.player)||0)+x.amount));
+  g.players.forEach(p=>{
+    if(!handStart.has(p)) return;
+    const s=st(p.name), g0=gross.get(p)||0;
+    s.net+=p.stack-handStart.get(p); s.won+=g0; s.biggest=Math.max(s.biggest,g0);
+    if(winners.has(p)){ s.wins++; if(kind==='fold')s.foldWins++; else s.sdWins++; }
+    if(p.out) s.outs++;
+  });
+  saveStats();
+}
+function renderStats(){
+  const list=Object.values(STATS.players).sort((a,b)=>(a.name==='ТЫ'?-1:b.name==='ТЫ'?1:a.name.localeCompare(b.name)));
+  $('#stBody').innerHTML=list.map(p=>{
+    const wr=p.hands?(p.wins/p.hands*100):0;
+    const net=p.net>0?`<span class="pos">+${money(p.net)}</span>`:p.net<0?`<span class="neg">${money(p.net)}</span>`:money(0);
+    return `<tr class="${p.name==='ТЫ'?'me':''}"><td>${p.name==='ТЫ'?'👤':'🤖'} ${esc(p.name)}</td>
+    <td>${p.hands}</td><td>${p.wins}</td><td>${wr.toFixed(1)}%</td><td>${money(p.won)}</td><td>${net}</td>
+    <td>${money(p.biggest)}</td><td>${p.showdowns} (${p.sdWins}W)</td><td>${p.folds}</td><td>${p.allIns}</td>
+    <td>${p.outs}</td><td>${p.gameWins}/${p.games}</td><td>${esc(p.bestName)}</td></tr>`;
+  }).join('') || '<tr><td colspan="13">Пусто</td></tr>';
+}
+
+/* =========================================================================
+   6. ОТРИСОВКА
+   ========================================================================= */
+let game=null, seats=[], dispPot=null; const dispStack=new Map();
+function buildSeats(){
+  seats.forEach(s=>[s.el,s.bet,s.bub].forEach(e=>e.remove()));
+  seats=[];
+  const n=game.players.length, table=$('#table');
+  const rx=41, ry=39;
+  for(let i=0;i<n;i++){
+    const ang=(i/n)*2*Math.PI - Math.PI/2;
+    const put=(cls,fx,fy)=>{
+      const e=document.createElement('div'); e.className=cls;
+      e.style.left=(50+fx*Math.cos(ang))+'%'; e.style.top=(50+fy*Math.sin(ang))+'%';
+      table.appendChild(e); return e;
+    };
+    const el=put('seat',rx,ry);
+    el.innerHTML='<div class="sname"></div><div class="sstack"></div><div class="scards"></div><div class="shand"></div>';
+    seats.push({el, bet:put('bet hide',rx*.55,ry*.55), bub:put('bub hide',rx*.8,ry*.8+5),
+      name:el.querySelector('.sname'), stack:el.querySelector('.sstack'),
+      cards:el.querySelector('.scards'), hand:el.querySelector('.shand'), sig:''});
+  }
+}
+function drawCard(box,c,hidden,hl,anim){
+  const d=document.createElement('div');
+  d.className='card '+(hidden?'back':SCLS[cSuit(c)])+(hl?' hl':'')+(anim?' new':'');
+  if(!hidden) d.textContent=cStr(c);
+  box.appendChild(d);
+}
+function render(){
+  if(!game) return;
+  const actor = game.handOver ? null : game.nextActor();
+  $('#hnum').textContent='Раздача #'+game.handNo;
+  $('#stage').textContent = game.handOver && game.board.length ? STREETS[game.street] : STREETS[game.street];
+  $('#pot').textContent='Банк: '+money(dispPot!==null?dispPot:game.pot);
+  const bsig=game.board.join(',')+'|'+[...hlIds].join(',');
+  const bEl=$('#board');
+  if(bEl.dataset.sig!==bsig){
+    const old=bEl.childElementCount; bEl.innerHTML='';
+    game.board.forEach((c,i)=>drawCard(bEl,c,false,hlIds.has(c),i>=old));
+    bEl.dataset.sig=bsig;
+  }
+  game.players.forEach((p,i)=>{
+    const s=seats[i]; if(!s) return;
+    let cls='seat';
+    if(p.isHuman)cls+=' me'; if(p.folded)cls+=' fold'; if(p.out)cls+=' out';
+    if(p===actor)cls+=' turn'; if(p.winner)cls+=' win';
+    s.el.className=cls;
+    let nm=(p.isHuman?'👤 ТЫ':'🤖 '+p.name)+(p.useServer?' ⚡':'');
+    if(i===game.button)nm+=' <span class="badge D">D</span>';
+    if(i===game.sbIdx)nm+=' <span class="badge SB">SB</span>';
+    if(i===game.bbIdx)nm+=' <span class="badge BB">BB</span>';
+    s.name.innerHTML=nm;
+    s.stack.textContent=money(dispStack.has(p)?dispStack.get(p):p.stack)+(p.stack===0&&!p.folded&&!p.out?' (ALL-IN)':'');
+    const reveal = p.isHuman||CFG.showAll||game.reveal||p.winner;
+    const sig=p.cards.join(',')+'|'+reveal+'|'+(p.winner?[...hlIds].join(','):'');
+    if(s.sig!==sig){
+      s.cards.innerHTML='';
+      p.cards.forEach(c=>drawCard(s.cards,c,!reveal,p.winner&&hlIds.has(c),false));
+      s.sig=sig;
+    }
+    s.hand.textContent = p.handName ? (p.winner?'🏆 ':'')+p.handName : '';
+    if(p.bet>0&&!p.folded&&!p.out){ s.bet.textContent='💰 '+money(p.bet); s.bet.classList.remove('hide'); }
+    else s.bet.classList.add('hide');
+    if(p.act&&!p.folded&&!p.out){ s.bub.textContent=p.act.text; s.bub.className='bub '+p.act.t; }
+    else s.bub.classList.add('hide');
+  });
+}
+let hlIds=new Set();
+
+/* ---- звук и переток фишек ---- */
+let actx=null,lastClink=0;
+function audio(){ if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}} if(actx?.state==='suspended')actx.resume(); }
+function clink(){
+  if(!CFG.sound||!actx) return;
+  const now=performance.now(); if(now-lastClink<60)return; lastClink=now;
+  const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+  o.type='triangle'; o.frequency.setValueAtTime(1700+Math.random()*600,t);
+  o.frequency.exponentialRampToValueAtTime(520,t+.09);
+  g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.09,t+.005);
+  g.gain.exponentialRampToValueAtTime(.0001,t+.13);
+  o.connect(g).connect(actx.destination); o.start(t); o.stop(t+.14);
+}
+function fly(from,to){
+  const T=$('#table'), tr=T.getBoundingClientRect(), a=from.getBoundingClientRect(), b=to.getBoundingClientRect();
+  const ax=a.left+a.width/2-tr.left, ay=a.top+a.height/2-tr.top;
+  const bx=b.left+b.width/2-tr.left, by=b.top+b.height/2-tr.top;
+  for(let i=0;i<6;i++){
+    const c=document.createElement('div'); c.className='chip';
+    c.style.left=ax+'px'; c.style.top=ay+'px'; T.appendChild(c);
+    if(c.animate){
+      const an=c.animate([
+        {transform:'translate(-50%,-50%) scale(.5)',opacity:0},
+        {transform:`translate(-50%,-50%) translate(${(bx-ax)/2}px,${(by-ay)/2-50}px) scale(1)`,opacity:1,offset:.5},
+        {transform:`translate(-50%,-50%) translate(${bx-ax}px,${by-ay}px) scale(.7)`,opacity:0}
+      ],{duration:600,delay:i*45,easing:'cubic-bezier(.22,.9,.3,1)',fill:'forwards'});
+      an.onfinish=()=>{c.remove();clink();};
+    }
+    setTimeout(()=>c.remove(),1600);
+  }
+}
+async function animatePayout(events, potBefore, before, sig){
+  let potLeft=potBefore; const run=new Map(before);
+  dispPot=potBefore; before.forEach((v,p)=>dispStack.set(p,v)); render();
+  for(const ev of events){
+    if(sig.aborted) break;
+    const targets=ev.winners.map(w=>{
+      const from=run.get(w.player)??w.player.stack, to=from+w.amount;
+      run.set(w.player,to); return {p:w.player,from,to,amt:w.amount};
+    });
+    const pf=potLeft; potLeft-=ev.amount;
+    if(CFG.speed>0.1) targets.forEach(t=>fly($('#pot'),seats[game.players.indexOf(t.p)].stack));
+    const dur=CFG.speed>0.1?600:0, t0=performance.now();
+    await new Promise(res=>{
+      const step=now=>{
+        if(sig.aborted) return res();
+        const k=dur?Math.min(1,(now-t0)/dur):1, e=1-Math.pow(1-k,3);
+        dispPot=pf+(potLeft-pf)*e;
+        targets.forEach(t=>dispStack.set(t.p,t.from+(t.to-t.from)*e));
+        render();
+        k<1?requestAnimationFrame(step):res();
+      };
+      requestAnimationFrame(step);
+    });
+    targets.forEach(t=>{
+      const el=document.createElement('div'); el.className='gain'; el.textContent='+'+money(t.amt);
+      seats[game.players.indexOf(t.p)].el.appendChild(el); setTimeout(()=>el.remove(),1200);
+    });
+    await pause(120,sig);
+  }
+  dispPot=null; dispStack.clear(); render();
+}
+
+/* =========================================================================
+   7. ХОД ЧЕЛОВЕКА
+   ========================================================================= */
+let humanResolve=null;
+function setBtns(on,L){
+  $('#bFold').disabled=!on; $('#bCheck').disabled=!on||!L?.canCheck;
+  $('#bCall').disabled=!on||!L||L.toCall===0; $('#bRaise').disabled=!on||!L?.canRaise;
+  $('#bAuto').disabled=!on; $('#raiseSlider').disabled=!on||!L?.canRaise;
+}
+function askHuman(p,sig){
+  const L=game.legal(p);
+  const opp=Math.max(1,game.inHand().length-1);
+  const eq=equity(p.cards,game.board,opp,800,Math.random);
+  const odds=L.toCall>0?L.toCall/(game.pot+L.toCall):0;
+  $('#myHand').textContent = game.board.length>=3 ? handName(evalHand([...p.cards,...game.board])) : holeDesc(p.cards);
+  $('#myEq').textContent=(eq*100).toFixed(0)+'%';
+  $('#myOdds').textContent=`эквити · нужно ${(odds*100).toFixed(0)}% для колла ${money(L.toCall)}`;
+  const sl=$('#raiseSlider');
+  if(L.canRaise){
+    sl.min=L.minTo; sl.max=L.maxTo; sl.step=Math.max(1,Math.round(game.bbAmt/2)); sl.value=L.minTo;
+    $('#raiseVal').textContent=money(L.minTo); $('#raiseMax').textContent='max '+money(L.maxTo);
+    $('#bRaise').textContent = L.maxTo<=L.minTo ? `Ва-банк ${money(L.maxTo)} (R)` : `Рейз ${money(L.minTo)} (R)`;
+  } else { $('#raiseVal').textContent='—'; $('#raiseMax').textContent=''; $('#bRaise').textContent='Рейз (R)'; }
+  $('#bCall').textContent = L.toCall>0 ? `Колл ${money(L.toCall)} (K)` : 'Колл (K)';
+  setBtns(true,L);
+  log(`🎯 Твой ход [${STREETS[game.street]}]`);
+  return new Promise(res=>{
+    humanResolve=res;
+    sig.addEventListener('abort',()=>{ if(humanResolve===res){humanResolve=null;setBtns(false);res(null);} },{once:true});
+  });
+}
+function humanAct(action){
+  if(!humanResolve||!game) return;
+  const p=game.players.find(x=>x.isHuman), L=game.legal(p);
+  let amount=0;
+  if(action==='auto') action = L.canCheck?'check':'fold';
+  if(action==='raise') amount=parseInt($('#raiseSlider').value,10)||L.minTo;
+  if(action==='call') amount=L.toCall;
+  const r=humanResolve; humanResolve=null; setBtns(false);
+  r({action,amount});
+}
+
+/* =========================================================================
+   8. КОНТРОЛЛЕР РАЗДАЧИ
+   ========================================================================= */
+const SB=5,BB=10,START=1000;
+let running=false, token=0, abort=null;
+function startGame(){
+  readCfg(); audio();
+  abort?.abort(); if(humanResolve){const r=humanResolve;humanResolve=null;r(null);}
+  token++; running=false;
+  $('#sdOverlay').classList.remove('on');
+  const players=[newPlayer('ТЫ',START,true,STYLES[7],false)];
+  for(let i=0;i<CFG.ai;i++)
+    players.push(newPlayer('ИИ_'+(i+1),START,false,STYLES[i%STYLES.length], i<CFG.srvCount));
+  game=new Game(players,{sb:SB,bb:BB,start:START});
+  game.reveal=false; hlIds=new Set(); dispPot=null; dispStack.clear();
+  buildSeats();
+  players.forEach(p=>{st(p.name).games++;}); saveStats();
+  log(`🎮 Новая игра: ${players.length} игроков, на сервере ${CFG.srvCount}`,'info');
+  running=true; refreshServer();
+  runHand();
+}
+async function betting(sig){
+  let guard=0;
+  while(!sig.aborted && guard++<120){
+    const p=game.nextActor();
+    if(!p) return;
+    render();
+    const d = p.isHuman ? await askHuman(p,sig) : await askAI(game,p,sig);
+    if(sig.aborted) return;
+    const L=game.legal(p);
+    const safe = d || {action:L.canCheck?'check':'fold',amount:0};
+    const res=game.act(p,safe.action,safe.amount);
+    if(p.folded) st(p.name).folds++;
+    if(p.stack===0&&!p.folded&&!p._aiCounted){p._aiCounted=true;st(p.name).allIns++;}
+    render();
+    await pause(res.raised?520:380,sig);
+    if(game.handOver) return;
+  }
+}
+async function runHand(){
+  if(!running) return;
+  const my=++token;
+  abort=new AbortController(); const sig=abort.signal;
+  try{
+    game.reveal=false; hlIds=new Set();
+    game.startHand(); noteHandStart(game);
+    $('#stage').textContent='Префлоп'; render();
+    game.events.forEach(e=>log('🎲 '+e));
+    await pause(600,sig);
+    for(let st=0; st<4; st++){
+      if(sig.aborted||my!==token) return;
+      if(st>0){
+        game.dealStreet(); render();
+        log(`🃏 ${STREETS[game.street]}: ${game.board.map(cStr).join(' ')}`);
+        await pause(700,sig);
+      }
+      await betting(sig);
+      if(sig.aborted||my!==token) return;
+      if(game.handOver){ await finishFold(sig); return; }
+    }
+    await finishShowdown(sig);
+  }catch(e){
+    console.error(e); log('❌ Ошибка раздачи: '+e.message,'err');
+  }finally{
+    if(my===token){ setBtns(false); }
+  }
+}
+async function finishFold(sig){
+  const potBefore=game.pot, before=new Map(game.players.map(p=>[p,p.stack]));
+  const {winner,amount}=game.awardUncontested();
+  game.events.forEach(e=>log(e));
+  log(`🏆 ${winner.name} забирает ${money(amount)} — все сбросили`,'win');
+  noteOutcome(game,'fold',new Set([winner]),[{player:winner,amount}]);
+  game.reveal=true; render();
+  await animatePayout([{name:'Pot',amount,winners:[{player:winner,amount}]}],potBefore,before,sig);
+  await afterHand(sig,1200,false);
+}
+async function finishShowdown(sig){
+  const potBefore=game.pot, before=new Map(game.players.map(p=>[p,p.stack]));
+  const R=game.settle();
+  game.events.forEach(e=>log(e));
+  R.active.forEach(p=>{
+    st(p.name).showdowns++;
+    const c=catOf(R.scores.get(p));
+    if(c>st(p.name).bestCat){st(p.name).bestCat=c;st(p.name).bestName=handName(R.scores.get(p));}
+    log(`🃏 ${p.name}: ${p.cards.map(cStr).join(' ')} → ${p.handName}`,'info');
+  });
+  R.payouts.forEach(x=>log(`🏆 ${x.player.name} +${money(x.amount)}`,'win'));
+  noteOutcome(game,'showdown',R.winners,R.payouts);
+  game.reveal=true;
+  hlIds=new Set(); R.winners.forEach(w=>w.best.forEach(c=>hlIds.add(c.id ?? c)));
+  render();
+  showShowdownModal(R);
+  await animatePayout(R.events,potBefore,before,sig);
+  if(CFG.train) trainServer(R).catch(e=>console.warn('train:',e));
+  collectSamples(R);
+  const me=game.players.find(p=>p.isHuman);
+  const out=!me||me.out;
+  await waitContinue(sig, out?8000:20000, !out);
+  $('#sdOverlay').classList.remove('on');
+  await afterHand(sig,300,false);
+}
+function showShowdownModal(R){
+  const rows=R.active.map(p=>{
+    const w=R.winners.has(p);
+    const gain=R.payouts.filter(x=>x.player===p).reduce((s,x)=>s+x.amount,0);
+    return `<div class="hrow ${w?'w':''}"><span class="n">${p.isHuman?'👤 ТЫ':'🤖 '+esc(p.name)}</span>
+      <span class="cs">${p.cards.map(c=>`<span class="card ${SCLS[cSuit(c)]}">${cStr(c)}</span>`).join('')}</span>
+      <span class="r">${w?'🏆 ':''}${esc(p.handName)}${gain?' +'+money(gain):''}</span></div>`;
+  }).join('');
+  $('#sdModal').innerHTML=`<h2>🔓 Вскрытие</h2>
+    <div class="hrow"><span class="cs">${game.board.map(c=>`<span class="card ${SCLS[cSuit(c)]} ${hlIds.has(c)?'hl':''}">${cStr(c)}</span>`).join('')}</span></div>
+    ${rows}<div style="text-align:center;color:#93a4ad;font-size:.8em;margin-top:8px">Клик — продолжить</div>`;
+  $('#sdOverlay').classList.add('on');
+}
+function waitContinue(sig,ms,canSkip){
+  return new Promise(res=>{
+    const hint=$('#hint'); let left=Math.ceil(ms/1000), done=false;
+    const paint=()=>hint.textContent = canSkip?`🖱️ Клик — продолжить · ${left} с`:`⏳ Новая раздача через ${left} с`;
+    const finish=()=>{ if(done)return; done=true; clearTimeout(t); clearInterval(iv);
+      document.removeEventListener('pointerdown',onDown,true); hint.classList.remove('on'); res(); };
+    const onDown=()=>{ if(canSkip) finish(); };
+    const t=setTimeout(finish,ms);
+    const iv=setInterval(()=>{ if(sig.aborted||!running){finish();return;} left=Math.max(0,left-1); paint(); },1000);
+    if(canSkip) document.addEventListener('pointerdown',onDown,true);
+    sig.addEventListener('abort',finish,{once:true});
+    hint.classList.add('on'); paint();
+  });
+}
+async function afterHand(sig,ms){
+  await pause(ms,sig);
+  if(sig.aborted||!running) return;
+  game.players.forEach(p=>{p.winner=false;p.handName='';p.best=[];p.act=null;});
+  hlIds=new Set(); game.reveal=false; render();
+  if(game.alive().length<2){ endGame(); return; }
+  runHand();
+}
+function endGame(){
+  running=false; setBtns(false);
+  const w=game.alive()[0];
+  if(w){ st(w.name).gameWins++; saveStats();
+    log(`🎉 ПОБЕДИТЕЛЬ ТУРНИРА: ${w.name}!`,'win');
+    $('#sdModal').innerHTML=`<h2>🏆 Конец турнира</h2>
+      <div class="hrow">${w.isHuman?'🎉 Ты выиграл!':'Победитель: 🤖 '+esc(w.name)}</div>
+      <div class="hrow">Финальный стек: <b style="color:var(--gold)">${money(w.stack)}</b></div>
+      <div style="text-align:center;margin-top:10px"><button class="btn call" onclick="document.getElementById('sdOverlay').classList.remove('on')">Закрыть</button></div>`;
+    $('#sdOverlay').classList.add('on');
+  }
+}
+
+/* ---- обучение и датасет ---- */
+function collectSamples(R){
+  const net=new Map();
+  R.payouts.forEach(x=>net.set(x.player,(net.get(x.player)||0)+x.amount));
+  game.players.forEach(p=>{
+    const start=handStart.get(p);
+    p.samples.forEach(s=>{
+      s.outcome = R.winners.has(p)?'WIN':'LOSS';
+      s.profit = start!==undefined ? p.stack-start : 0;
+      s.hand = game.handNo;
+      samples.push(s);
+    });
+  });
+  $('#aiSamples').textContent=samples.length;
+}
+async function trainServer(R){
+  for(const p of game.players){
+    if(!p.useServer||!p.samples.length) continue;
+    const s=p.samples[p.samples.length-1];
+    const win=R.winners.has(p);
+    try{
+      await srvFetch('',{method:'PUT',headers:{'Content-Type':'application/json; charset=utf-8'},
+        body:JSON.stringify({stage:s.stage,my_cards:s.hole.join(', '),board:s.board.join(', '),
+          pot:s.pot,to_call:s.to_call,stack:s.stack,action_taken:`${s.action.toUpperCase()} ${s.amount||''}`.trim(),
+          outcome:win?'WIN (Победа)':'LOSS (Проигрыш)',
+          lesson:win?'Решение сработало.':(s.action==='fold'?'Сохранил стек, но упустил банк — сверь pot odds.':
+            s.action==='raise'?'Агрессия не оправдалась: оцени текстуру борда и эквити.':'Колл был математически неверным.')})},CFG.timeout);
+    }catch(e){ /* не критично */ }
+  }
+  refreshServer();
+}
+async function refreshServer(){
+  try{
+    const r=await srvFetch('/stats',{method:'GET'},5000);
+    const d=await r.json();
+    const mem=d.recent_memory||[];
+    $('#aiStatus').textContent=(d.status||'OK')+(Math.floor(SRV.lastMs / 1000)?` · ${Math.floor(SRV.lastMs / 1000)} мс`:'');
+    $('#aiBuf').textContent=mem.length+' / 100';
+    $('#aiWL').textContent=mem.filter(x=>x.outcome?.includes('WIN')).length+' / '+mem.filter(x=>x.outcome?.includes('LOSS')).length;
+  }catch(e){ $('#aiStatus').textContent = Date.now()<SRV.disabledUntil?'пауза (локальный режим)':'недоступен'; }
+}
+// function exportJSONL(){
+//   if(!samples.length){ alert('Пока нет сэмплов: сыграй раздачи с серверным ИИ.'); return; }
+//   const txt=samples.map(s=>JSON.stringify(s)).join('\n');
+//   download(txt,`poker-llm-${new Date().toISOString().slice(0,10)}.jsonl`,'application/x-ndjson');
+// }
+// function exportJSONL(){
+//   if(!samples.length){ alert('Пока нет сэмплов: сыграй раздачи с серверным ИИ.'); return; }
+//   const txt = samples.map(s => JSON.stringify(s) + ',').join('\n');
+//   download(txt, `poker-llm-${new Date().toISOString().slice(0,10)}.jsonl`, 'application/x-ndjson');
+// }
+function exportJSONL(){
+  if(!samples.length){ alert('Пока нет сэмплов: сыграй раздачи с серверным ИИ.'); return; }
+  const txt = samples.map(s => JSON.stringify(s)).join(',\n');
+  download(txt, `poker-llm-${new Date().toISOString().slice(0,10)}.jsonl`, 'application/x-ndjson');
+}
+
+
+function download(txt,name,type){
+  const url=URL.createObjectURL(new Blob([txt],{type}));
+  const a=document.createElement('a'); a.href=url; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+/* =========================================================================
+   9. САМОПРОВЕРКА ДВИЖКА (без DOM)
+   ========================================================================= */
+function evaluatorTests(){
+  const T=[], ok=(n,c)=>T.push([n,c]);
+  const E=s=>evalHand(handOf(s));
+  ok('роял > каре', E('A♠ K♠ Q♠ J♠ T♠') > E('A♠ A♥ A♦ A♣ K♠'));
+  ok('каре > фулл', E('A♠ A♥ A♦ A♣ K♠') > E('A♠ A♥ A♦ K♣ K♠'));
+  ok('фулл > флеш', E('A♠ A♥ A♦ K♣ K♠') > E('A♠ K♠ Q♠ J♠ 9♠'));
+  ok('флеш > стрит', E('A♠ K♠ Q♠ J♠ 9♠') > E('9♠ 8♥ 7♦ 6♣ 5♠'));
+  ok('колесо < 6-хай стрит', E('A♠ 2♥ 3♦ 4♣ 5♠') < E('6♠ 5♥ 4♦ 3♣ 2♠'));
+  ok('кикер двух пар', E('A♠ A♥ K♦ K♣ Q♠') > E('A♦ A♣ K♠ K♥ J♠'));
+  ok('фулл: старшинство сетов', E('A♠ A♥ A♦ 2♣ 2♠') > E('K♠ K♥ K♦ A♣ A♠'));
+  ok('7 карт: выбирается лучшее', evalHand(handOf('A♠ K♠ Q♠ J♠ T♠ 2♥ 3♦'))===E('A♠ K♠ Q♠ J♠ T♠'));
+  ok('сплит равен', E('A♠ K♠ Q♠ J♠ T♠')===E('A♥ K♥ Q♥ J♥ T♥'));
+  return T;
+}
+async function selfTest(n=500){
+  const t0=performance.now(); const errs=[];
+  evaluatorTests().forEach(([name,pass])=>{ if(!pass) errs.push('оценщик: '+name); });
+  const players=[]; for(let i=0;i<6;i++) players.push(newPlayer('T'+i,START,false,STYLES[i%8],false));
+  const g=new Game(players,{sb:SB,bb:BB,start:START,rng:mulberry32(20261119)});
+  const total=players.length*START;
+  let hands=0, acts=0;
+  while(hands<n && g.alive().length>1){
+    g.startHand();
+    if(g.chipTotal()!==total) errs.push(`раздача ${hands}: сумма после старта ${g.chipTotal()}`);
+    let guard=0;
+    while(!g.handOver && guard++<200){
+      const p=g.nextActor();
+      if(!p){ if(g.street>=3) break; g.dealStreet(); continue; }
+      const d=localDecision(g,p,40);
+      g.act(p,d.action,d.amount); acts++;
+    }
+    if(guard>=200) errs.push(`раздача ${hands}: торги не завершились`);
+    if(g.inHand().length<=1) g.awardUncontested(); else g.settle();
+    if(g.chipTotal()!==total) errs.push(`раздача ${hands}: сумма после расчёта ${g.chipTotal()}`);
+    hands++;
+    if(hands%50===0){ $('#testBtn').textContent=`🧪 ${hands}/${n}`; await pause(0,{aborted:false}); await new Promise(r=>setTimeout(r,0)); }
+  }
+  const ms=Math.round(performance.now()-t0);
+  $('#testBtn').textContent='🧪 Тест движка';
+  if(errs.length){ log(`❌ Тест: ${errs.length} ошибок за ${hands} раздач (${ms} мс)`,'err'); errs.slice(0,5).forEach(e=>log('   • '+e,'err')); }
+  else log(`✅ Тест пройден: ${hands} раздач, ${acts} действий, ${ms} мс. Фишки сохранены, оценщик корректен.`,'win');
+}
+
+/* =========================================================================
+   10. СОБЫТИЯ / ИНИЦИАЛИЗАЦИЯ
+   ========================================================================= */
+$('#startBtn').addEventListener('click',startGame);
+$('#bFold').addEventListener('click',()=>humanAct('fold'));
+$('#bCheck').addEventListener('click',()=>humanAct('check'));
+$('#bCall').addEventListener('click',()=>humanAct('call'));
+$('#bRaise').addEventListener('click',()=>humanAct('raise'));
+$('#bAuto').addEventListener('click',()=>humanAct('auto'));
+$('#raiseSlider').addEventListener('input',e=>{
+  $('#raiseVal').textContent=money(+e.target.value);
+  $('#bRaise').textContent=`Рейз ${money(+e.target.value)} (R)`;
+});
+document.querySelectorAll('.quick .btn').forEach(b=>b.addEventListener('click',()=>{
+  const sl=$('#raiseSlider'); if(sl.disabled) return;
+  const p=game.players.find(x=>x.isHuman), L=game.legal(p);
+  const q=b.dataset.q;
+  const v = q==='all' ? L.maxTo : Math.round(game.curBet + Math.max(game.bbAmt,(game.pot+L.toCall)*parseFloat(q)));
+  sl.value=clamp(v,+sl.min,+sl.max); sl.dispatchEvent(new Event('input'));
+}));
+document.addEventListener('keydown',e=>{
+  if(/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName||'')) return;
+  const k=e.key.toLowerCase();
+  if(k==='f'&&!$('#bFold').disabled) humanAct('fold');
+  if(k==='c'&&!$('#bCheck').disabled) humanAct('check');
+  if(k==='k'&&!$('#bCall').disabled) humanAct('call');
+  if((k==='r'||k===' ')&&!$('#bRaise').disabled){ e.preventDefault(); humanAct('raise'); }
+});
+['aiCount','srvCount','srvUrl','srvTimeout','speed','showAll','sound','train'].forEach(id=>
+  $('#'+id).addEventListener('change',()=>{ readCfg(); render(); }));
+$('#statsBtn').addEventListener('click',()=>{ renderStats(); $('#stOverlay').classList.add('on'); });
+$('#stClose').addEventListener('click',()=>$('#stOverlay').classList.remove('on'));
+$('#stExport').addEventListener('click',()=>download(JSON.stringify(STATS,null,2),'poker-stats.json','application/json'));
+$('#stReset').addEventListener('click',()=>{ if(confirm('Сбросить всю статистику?')){ STATS={players:{},updatedAt:0}; saveStats(); renderStats(); } });
+$('#jsonlBtn').addEventListener('click',exportJSONL);
+$('#testBtn').addEventListener('click',()=>selfTest(500));
+$('#stOverlay').addEventListener('click',e=>{ if(e.target===$('#stOverlay')) $('#stOverlay').classList.remove('on'); });
+window.addEventListener('beforeunload',saveStats);
+loadCfg(); loadStats(); readCfg();
+log('Готов. Нажми «Начать игру». Проверить правила можно кнопкой «Тест движка».','info');
+</script>
+</body>
+</html>

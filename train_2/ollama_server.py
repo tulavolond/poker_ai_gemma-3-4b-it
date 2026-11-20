@@ -8,20 +8,27 @@ poker_server_v3.py - Покерный сервер с обученной мод�
 import os
 import re
 import json
+import time
+import string
+import ollama
 import traceback
 import threading
 import torch
+from urllib.parse import urlparse, parse_qs
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from peft import PeftModel, LoraConfig, get_peft_model
-from analyzer import ( classify_preflop_hand, calculate_equity, build_deck, analyze_preflop, classify_preflop_hand, 
-                      RANKS, SUITS, RANK_NAMES, Card, evaluate_hand, HAND_STRENGTH_BASE)
+from deep_analyzer import classify_preflop_hand, calculate_equity, build_deck, analyze_preflop, classify_preflop_hand, RANKS, SUITS, RANK_NAMES, Card, evaluate_hand, HAND_STRENGTH_BASE
 
 # Импортируем наш тренер для генерации данных
 from trainer import generate_training_examples
+
+# Сколько последних сообщений хранить (user + assistant считаются вместе)
+MAX_MESSAGES = 40
+
 
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -30,15 +37,138 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 # КОНФИГУРАЦИЯ - ВСЕ НАСТРОЙКИ ЗДЕСЬ
 # ============================================================
 BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
-LORA_PREFLOP_PATH = "./lora_preflop_stage1"
-LORA_ONLINE_PATH = "./lora_online_learning"
-MEMORY_FILE = "./poker_memory.json"
-BUFFER_FILE = "./training_buffer.json"
-STATS_FILE = "./training_stats.json"
+# LORA_PREFLOP_PATH = "./lora_preflop_stage_3" # <- Сгенерирована train_stage_3_google.py и выложена в ollama взять можно chat_memory.py
+
+# LORA_PREFLOP_PATH = "./lora_preflop_stage_3_interrupted" # <- Сгенерирована train_stage_3_google.py и выложена в ollama взять можно chat_memory.py
+# LORA_PREFLOP_PATH = "./train_2/lora_all_stage_4" # <- Сгенерирована train_stage_3_google.py и выложена в ollama взять можно chat_memory.py
+LORA_PREFLOP_PATH = "./train_2/dataset_200" # <- Сгенерирована train_stage_3_google.py и выложена в ollama взять можно chat_memory.py
+# LORA_PREFLOP_PATH = "./train_2/lora_all_stage_2000" # <- Сгенерирована train_stage_3_google.py и выложена в ollama взять можно chat_memory.py
+# LORA_PREFLOP_PATH = "./lora_online_learning" # <- Сгенерирована онлайн Invoke-RestMethod -Uri http://192.168.1.103:8899/pretrain
+LORA_ONLINE_PATH = "./train_2/dataset_online_200"
+MEMORY_FILE = "./train_2/poker_memory.json"
+BUFFER_FILE = "./train_2/training_buffer.json"
+STATS_FILE = "./train_2/training_stats.json"
 PORT = 8899
 HOST = "192.168.1.103"
+# MODEL_NAME = "gemma3-poker:latest"
+MODEL_NAME = "qwen-poker:latest"
+# MODEL_NAME = "gemma3:4b"
+OLLAMA_BASE_URL = "http://192.168.1.100:11434"
+HISTORY_FILE = "chat_memory_ollama.json"
+MEMORY_LIMIT = 100  # сколько примеров копить до обучения
 
-MEMORY_LIMIT = 50  # сколько примеров копить до обучения
+client = ollama.Client(host=OLLAMA_BASE_URL)
+
+def load_history():
+    """Загружает историю из файла. Если файла нет — возвращает пустой список."""
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    print(f"Загружена история: {len(data)} сообщений.")
+                    return data
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"Не удалось прочитать историю ({e}). Начинаем с чистого листа.")
+    return []
+
+
+def save_history(messages):
+    """Сохраняет историю в файл."""
+    try:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(messages, f, ensure_ascii=False, indent=2)
+    except OSError as e:
+        print(f"Не удалось сохранить историю: {e}")
+
+
+def trim_history(messages, max_messages=MAX_MESSAGES):
+    """
+    Обрезает историю, оставляя последние max_messages сообщений.
+    Важно: стараемся не разрывать пару user/assistant и не начинать
+    историю с ответа ассистента (некоторые модели это не любят).
+
+    SYSTEM_PROMPT = (
+    "Ты — ассистент с памятью. Вся переписка ниже — это единый диалог. "
+    "Ты ОБЯЗАН использовать информацию из предыдущих сообщений. "
+    "Если пользователь называл своё имя ранее — называй его. "
+    "Никогда не говори, что не помнишь имя или не имеешь памяти: "
+    "вся история диалога тебе доступна в этом запросе."
+    )
+    def start_chat_session():
+    messages = load_history()
+    # Вставляем системный промпт только если истории ещё нет
+    if not messages:
+        messages.append({"role": "system", "content": SYSTEM_PROMPT})
+    ...
+    """
+    if len(messages) <= max_messages:
+        return messages
+
+    trimmed = messages[-max_messages:]
+
+    # Если первое сообщение — ответ ассистента, сдвигаем на один,
+    # чтобы диалог начинался с вопроса пользователя.
+    if trimmed and trimmed[0]["role"] == "assistant":
+        trimmed = trimmed[1:]
+
+    return trimmed
+
+
+def start_ai(user_input: string):
+    messages = load_history()
+    
+    try:
+       
+        if user_input.lower() in ["clear", "очистить"]:
+            messages = []
+            save_history(messages)
+            print("Память очищена.")
+            return "Память очищена."
+                        
+        print("🤖 ИИ думает 🧠...")
+        
+        messages.append({"role": "user", "content": user_input})
+        messages = trim_history(messages)
+        response = client.chat(
+            model=MODEL_NAME,
+            messages=messages,
+            stream=False,  # Отключаем потоковую передачу (можно вообще удалить эту строку, так как False стоит по умолчанию)
+            # options={
+            #     "temperature": 0.0,
+            #     "top_p": 0.1,
+            #     "top_k": 10,
+            #     "repeat_penalty": 1.15,
+            #     "num_ctx": 4096,
+            #     "num_predict": 512
+            # },
+            options={
+                "temperature": 0.1,
+                "repeat_penalty": 1.1,
+                "num_ctx": 2048,
+                "num_predict": 250,
+                "system": "Ты профессиональный и очень внимательный к деталям покерный игрок в Техасский Холдем."
+            }
+        )
+
+        # Сразу достаем весь текст ответа из словаря
+        assistant_reply = response["message"]["content"]
+        print(assistant_reply)
+
+        messages.append({"role": "assistant", "content": assistant_reply})
+        messages = trim_history(messages)
+
+        # Сохраняем после каждого обмена — чтобы не потерять при аварийном закрытии
+        save_history(messages)
+        
+        return assistant_reply
+    except KeyboardInterrupt:
+        save_history(messages)
+        print("\nЧат прерван. История сохранена.")
+    except Exception as e:
+        print(f"\nПроизошла ошибка: {e}")
+        save_history(messages)
+
 
 print("=" * 60)
 print("  ЗАГРУЗКА МОДЕЛИ")
@@ -199,6 +329,10 @@ STAGE_INSTRUCTIONS = {
 }
 
 FEW_SHOT = """
+Ответь СТРОГО в формате:
+АНАЛИЗ: [одно предложение с твоей логикой]
+ДЕЙСТВИЕ: [FOLD / CHECK / CALL / RAISE]
+СУММА: [число]
 
 ПРИМЕР ПРАВИЛЬНОГО ОТВЕТА:
 АНАЛИЗ: У меня пара тузов, эквити 78%, вэлью-бет.
@@ -237,7 +371,17 @@ def detect_cart(prompt_text):
         return premium_hands
     else:
         # Возвращаем пустой список, а не список с пустым кортежем
-        return []
+        return None
+    
+def detect_stack(prompt_text):
+    # 1. Ищем строку с картами
+    line_match = re.search(r'ТВОЙ СТЕК: (.+)', prompt_text.upper())
+    if line_match:
+        line_match = line_match.group(1).replace('$', '')
+        return int(line_match)
+    else:
+        # Возвращаем пустой список, а не список с пустым кортежем
+        return 1010
 
 def generate_response(prompt, max_new_tokens=100):
     """Генерирует ответ модели."""
@@ -276,45 +420,58 @@ def generate_response(prompt, max_new_tokens=100):
     
     return response.strip()
 
-
-
 # ============================================================
 # 5. ИНФЕРЕНС
 # ============================================================
-def run_inference(prompt_text, max_tokens=100, stage_hint=None):
+def run_inference(prompt_text: string, max_tokens=100, stage_hint=None):
     stage = stage_hint or detect_stage(prompt_text)
-    print(f"stage: {stage}")
-    if stage == "preflop" and cart:
-        cart = detect_cart(prompt_text)
-        # 1. ПРОВЕРКА: Если список пустой, выходим или возвращаем ошибку
-        # print("❌ Ошибка: Карты не найдены в промпте. Инференс прерван.")
-        # return "Ошибка: не удалось определить карты."
-        # 2. Если список не пустой, берем ПЕРВУЮ руку (индекс 0)
-        # Это решает проблему, если detect_cart вернет много рук
-        h1_str, h2_str = cart[0] 
-        rank_map = {str(v): k for k, v in RANK_NAMES.items()}
-        rank_map.update({str(i): i for i in range(2, 11)})
-        h1 = Card(rank_map[h1_str[0]], h1_str[1])
-        h2 = Card(rank_map[h2_str[0]], h2_str[1])
-        print(f"\n🃏 Рука: {h1}, {h2}")
-        analysis = analyze_preflop(
-            hero_cards=[h1, h2],
-            position="BTN (баттон)",
-            action_before="Все сбросили до тебя",
-            stack=1000,
-            bb=10
-        )
-        response = generate_response(analysis["prompt"])
-        print(f"🤖 Ответ модели:\n{response}")
-        return response
-    # if stage == 'flop':
-        
+    stack = detect_stack(prompt_text)
+    print(f"stage: {stage} stack: {stack}")
+    cart = detect_cart(prompt_text)
+    h1_str, h2_str = cart[0]
+    rank_map = {str(i): i for i in range(2, 11)}  # '2': 2, ..., '10': 10
+    rank_map.update({v: k for k, v in RANK_NAMES.items()})
+    # Безопасное разделение: ранг — всё до масти, масть — последний символ
+    h1 = Card(rank_map[h1_str[:-1]], h1_str[-1])
+    h2 = Card(rank_map[h2_str[:-1]], h2_str[-1])
+    print(f"h1: {h1}, h2: {h2}")
+    # 1. ПРОВЕРКА: Если список пустой, выходим или возвращаем ошибку
+    # if (stage == "preflop" or stage == 'flop' or stage == 'turn') and cart != None:
+    messages = load_history()
+    messages.append({"role": "user", "content": prompt_text})
+    messages = trim_history(messages)
+    save_history(messages)
+    
+    response = generate_response(prompt_text)
+    # if (stage == "preflop0000000000000") and cart != None:
+    # if (stage) and cart != None:
+    #     print(f"\n🃏 Рука: {h1}, {h2}")
+    #     analysis = analyze_preflop(
+    #         hero_cards=[h1, h2],
+    #         position="BTN (баттон)",
+    #         action_before="",
+    #         stack=stack,
+    #         bb=10
+    #     )
+    #     response = generate_response(analysis["prompt"])
+    #     messages.append({"role": "user", "content": response})
+    #     messages = trim_history(messages)
+    #     save_history(messages)
+    #     print(f"🤖 Ответ модели:\n{response}")
+    #     return h1_str + h2_str + "|" + response
+
     # Добавляем инструкции по стадии
     instruction = STAGE_INSTRUCTIONS.get(stage, "")
     full_prompt = prompt_text + "\n\n" + instruction + FEW_SHOT
-
+    print("="*60)
+    print(f"full_prompt:\n{full_prompt}")
+    print("="*60)
     # Токенизация
-    messages = [{"role": "user", "content": full_prompt}]
+    # messages = [{"role": "user", "content": full_prompt}]
+    messages.append({"role": "user", "content": full_prompt})
+    messages = trim_history(messages)
+    save_history(messages)
+    
     chat_prompt = tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
@@ -324,13 +481,27 @@ def run_inference(prompt_text, max_tokens=100, stage_hint=None):
     ).to(model.device)
     input_length = inputs["input_ids"].shape[1]
 
+
+    
+       
+    if prompt_text.lower() in ["clear", "очистить"]:
+        messages = []
+        save_history(messages)
+        print("Память очищена.")
+        return "Память очищена."
+                    
+    
+    # messages.append({"role": "user", "content": prompt_text})
+    # messages = trim_history(messages)
+    print("🤖 ИИ думает 🧠...")
+
     # Генерация
     with torch.no_grad():
         outputs = model.generate(
             **inputs,
             max_new_tokens=max_tokens,
             do_sample=True,
-            temperature=0.1 if stage == "preflop" else 0.3,
+            temperature=0.1, # if stage == "preflop" else 0.3,
             top_p=0.5,
             repetition_penalty=1.15,
         )
@@ -350,16 +521,26 @@ def run_inference(prompt_text, max_tokens=100, stage_hint=None):
         text += "\nСУММА: 0"
         
     cart = detect_cart(prompt_text)
-    # print(prompt_text)
+    print(prompt_text)
     # 1. ПРОВЕРКА: Если список пустой, выходим или возвращаем ошибку
-    if not cart:
+    if cart == None:
         print("❌ Ошибка: Карты не найдены в промпте. Инференс прерван.")
         return text.strip()
         # return "Ошибка: не удалось определить карты."
     # 2. Если список не пустой, берем ПЕРВУЮ руку (индекс 0)
     # Это решает проблему, если detect_cart вернет много рук
-    h1_str, h2_str = cart[0] 
-    return h1_str + h2_str + "|" + text.strip()
+    try: 
+        # Сразу достаем весь текст ответа из словаря
+        # print(text)
+
+        messages.append({"role": "assistant", "content": text})
+        messages = trim_history(messages)
+
+        # Сохраняем после каждого обмена — чтобы не потерять при аварийном закрытии
+        save_history(messages)
+        return text.strip() + "\n" + h1_str + h2_str 
+    except:
+        return text.strip()
 
 
 # ============================================================
@@ -501,11 +682,70 @@ class ModelHandler(BaseHTTPRequestHandler):
                     'preflop_model_available': PREFLOP_AVAILABLE,
                     'buffer_size': len(training_buffer),
                     'last_loss': last_loss,
-                    'recent_memory': memory_cache[-50:],
+                    'recent_memory': memory_cache[-100:],
                     'stats': stats
                 }, ensure_ascii=False).encode('utf-8')
                 self._safe_write(data)
                 return
+            
+            if self.path == "/ai":
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json; charset=utf-8')
+                self._set_cors()
+                self.end_headers()
+                data = json.dumps({
+                    'ai_response': start_ai("""
+                        Ты профессиональный покерный калькулятор и игрок.
+                        ТВОЙ СТИЛЬ ИГРЫ: АГРЕССИВНЫЙ.
+                        ПРАВИЛА СТИЛЯ: Ты часто блефуешь (25%), особенно на ПРЕФЛОП и ТЁРН. Пытаешься выбить соперников рейзом, даже со средней рукой.
+                        Отвечай СТРОГО в формате:
+                        АНАЛИЗ: [одно предложение с твоей логикой]
+                        ДЕЙСТВИЕ: [FOLD -сбросить / CHECK - пройти дальше без ставки, если позволяет стол (боард) / CALL -уровнять / RAISE -увеличить]
+                        СУММА: [число, или 0]
+                        СУММА ПОЯСНЕНИЕ: [коротко поясни почему СУММА такая? одно, короткое предложение]
+                        
+                        === СИТУАЦИЯ: ПРЕФЛОП ===
+                        ТВОИ КАРТЫ: Q♣, A♠
+                        БОРД: ещё нет карт на столе
+                        — АНАЛИЗ ОТ СИСТЕМЫ —
+                        ТВОЙ СТИЛЬ: ХИТРЫЙ
+                        БАНК: $15, ТВОЙ СТЕК: $1000
+                        ЧТО БЫ НАЧАТЬ ИГРУ НУЖНО КОЛЛИРОВАТЬ: $10
+                    """),
+                }, ensure_ascii=False).encode('utf-8')
+                self._safe_write(data)
+                return
+
+            try:
+                # 1. Разбираем URL на составляющие
+                parsed_url = urlparse(self.path)
+
+                # 2. Проверяем чистый путь (без параметров)
+                if parsed_url.path == "/ai" or parsed_url.path == "/ai/":
+                    # 3. Извлекаем параметры в виде словаря
+                    # Например, для /ai?id=5&tag=news вернет {'id': ['5'], 'tag': ['news']}
+                    params = parse_qs(parsed_url.query)
+
+                    # Удобное получение одиночного значения с запасным вариантом (по умолчанию)
+                    user_mes = params.get('message', [None])[0]
+                    # limit = params.get('limit', ['10'])[0]
+                    print(f"user_mes: {user_mes}")
+                    if user_mes == "clear":
+                        messages = []
+                        save_history(messages)
+                        print("Память очищена.")
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json; charset=utf-8')
+                    self._set_cors()
+                    self.end_headers()
+
+                    # Отправляем ответ для проверки
+                    response_data = {"status": "ok", "message": user_mes}
+                    self.wfile.write(json.dumps(response_data).encode('utf-8'))
+                    return
+
+            except Exception as e:
+                self.send_error(500, str(e))
 
             if self.path == "/pretrain":
                 self.handle_pretrain()
@@ -516,7 +756,8 @@ class ModelHandler(BaseHTTPRequestHandler):
             # self._set_cors()
             # self.end_headers()
             # self._safe_write(b"Server is running")
-            memory = load_memory()[-50:]
+            
+            memory = load_memory()[-100:]
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self._set_cors()
@@ -538,7 +779,7 @@ class ModelHandler(BaseHTTPRequestHandler):
         """Генерация обучающих данных."""
         try:
             print("\n🎓 [PRETRAIN] Запуск предобучения...")
-            examples = generate_training_examples(100)
+            examples = generate_training_examples(1000)
             stats["pretrain_examples"] += len(examples)
             training_buffer.extend(examples)
             save_all_data()
@@ -559,55 +800,6 @@ class ModelHandler(BaseHTTPRequestHandler):
             print(f"❌ Pretrain error: {e}")
             self._send_error(500, str(e))
 
-    # def do_POST(self):
-    #     try:
-    #         length = int(self.headers.get('Content-Length', 0))
-    #         if length == 0:
-    #             self._send_error(400, "Empty body")
-    #             return
-
-    #         raw_body = self.rfile.read(length)
-    #         body = json.loads(raw_body.decode('utf-8'))
-
-    #         prompt = body.get('prompt', '')
-    #         stage = body.get('stage', '').lower()
-
-    #         if not prompt:
-    #             self._send_error(400, "Empty prompt")
-    #             return
-
-    #         # Определяем стадию
-    #         if not stage:
-    #             stage = detect_stage(prompt)
-
-    #         # Считаем статистику
-    #         if stage == 'preflop':
-    #             stats["preflop_queries"] += 1
-    #             print(f"🎯 [ПРЕФЛОП] Используем обученную модель")
-    #         else:
-    #             stats["postflop_queries"] += 1
-    #             print(f"📊 [ПОСТФЛОП: {stage}] Используем модель с промптом")
-
-    #         # Инференс
-    #         response_text = run_inference(prompt, body.get('max_tokens', 100), stage)
-
-    #         print(f"\n📥 Запрос ({len(prompt)} симв.)")
-    #         print(f"📤 Ответ: {response_text[:300]}")
-
-    #         self.send_response(200)
-    #         self.send_header('Content-Type', 'application/json; charset=utf-8')
-    #         self._set_cors()
-    #         self.end_headers()
-    #         data = json.dumps({'response': response_text}, ensure_ascii=False).encode('utf-8')
-    #         self._safe_write(data)
-
-    #     except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
-    #         print("⚠️ Клиент разорвал соединение")
-    #     except Exception as e:
-    #         print(f"❌ Ошибка POST: {e}")
-    #         traceback.print_exc()
-    #         self._send_error(500, str(e))
-
     def do_POST(self):
         try:
             length = int(self.headers.get('Content-Length', 0))
@@ -623,11 +815,37 @@ class ModelHandler(BaseHTTPRequestHandler):
                 self._send_error(400, "Empty prompt")
                 return
 
-            response_text = run_inference(prompt, body.get('max_tokens', 100))
-
-            print(f"\n Промпт: \n{prompt}\n")
-            print(f"\n📥 Запрос. Промпт: {len(prompt)} симв.")
-            print(f"📤 Ответ: {response_text[:300]}")
+            response_text = ""
+            start = time.time()
+            stage = detect_stage(prompt)
+            print(f"stage: {stage}")
+            print("-" * 60)
+            # if stage == 'preflop00000000000000000000':
+            if stage:
+                messages = []                   
+                save_history(messages)
+                print("=" * 60)
+                print(f"stage: {stage}")
+                print("=" * 60)
+                response_text = run_inference(prompt, body.get('max_tokens', 100))
+                elapsed = time.time() - start
+                time_str = f"{elapsed:.1f}s"
+                response_text = time_str + " | " +  response_text
+            
+            else:
+                if stage == 'preflop':
+                    messages = []                   
+                    save_history(messages)
+                start = time.time()
+                response_text = start_ai(prompt)
+                elapsed = time.time() - start
+                time_str = f"{elapsed:.1f}s"
+                print(f"\n ЗАНЯЛО ВРЕМЯ --- {time_str}s.\n")
+                
+                response_text = time_str + " | " +  response_text  
+                # print(f"\n Промпт: \n{prompt}\n")
+                print(f"\n📥 Запрос. Промпт: {len(prompt)} симв.")
+                print(f"📤 Ответ: {response_text[:300]}")
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -673,7 +891,7 @@ class ModelHandler(BaseHTTPRequestHandler):
             outcome = body.get("outcome", "LOSS")
             lesson = body.get("lesson", "")
 
-            prompt = f"""СТУДИЯ: {stage.upper()}
+            prompt = f"""СТАДИЯ: {stage.upper()}
 ТВОИ КАРТЫ: {hand_data['my_cards']}
 БОРД: {hand_data['board']}
 БАНК: ${hand_data['pot']}, СТЕК: ${hand_data['stack']}

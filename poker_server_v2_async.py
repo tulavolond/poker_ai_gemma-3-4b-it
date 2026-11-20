@@ -21,7 +21,8 @@ pretrain_status = {"running": False, "progress": 0, "message": "Не запущ�
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
 MODEL_ID = "google/gemma-3-4b-it"
-LORA_PATH = "./poker_gemma3_lora"
+# LORA_PATH = "./poker_gemma3_lora"
+LORA_PATH = "./poker_gemma_lora"
 MEMORY_FILE = "./poker_memory.json"
 PORT = 8899
 HOST = "192.168.1.103"

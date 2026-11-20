@@ -1,9 +1,6 @@
 """
-poker_server_v3.py - Покерный сервер с обученной моделью.
-ОДНА модель (Qwen2.5-1.5B) для всех стадий.
-Работает на 8GB видеопамяти.
-
-Запуск: python poker_server_v3.py
+poker_server_v2.py - Сервер с обучением LoRA на 4 стадиях покера.
+Запуск: python poker_server_v2.py
 """
 import os
 import json
@@ -23,23 +20,17 @@ import threading
 pretrain_status = {"running": False, "progress": 0, "message": "Не запущен"}
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
-
-# ============================================================
-# КОНФИГУРАЦИЯ - ВСЕ НАСТРОЙКИ ЗДЕСЬ
-# ============================================================
-BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
-LORA_PATH = "./lora_preflop_stage1"
-LORA_ONLINE_PATH = "./lora_online_learning"
-MEMORY_FILE = "./poker_memory.json"
-BUFFER_FILE = "./training_buffer.json"
-STATS_FILE = "./training_stats.json"
+MODEL_ID = "google/gemma-3-4b-it"
+# LORA_PATH = "./poker_gemma3_lora"
+LORA_PATH = "./gemma/poker_gemma_lora"
+MEMORY_FILE = "./gemma/poker_memory.json"
 PORT = 8899
 HOST = "192.168.1.103"
 
 # ============ Память с сохранением на диск ============
 training_buffer = []
 memory_cache = []
-# MEMORY_LIMIT = 30
+MEMORY_LIMIT = 30
 last_loss = 0.0
 training_lock = threading.Lock()
 save_lock = threading.Lock()
@@ -54,8 +45,6 @@ print("=" * 60)
 print("  ЗАГРУЗКА МОДЕЛИ")
 print("=" * 60)
 
-
-
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True, bnb_4bit_quant_type="nf4",
     bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=True,
@@ -63,38 +52,17 @@ bnb_config = BitsAndBytesConfig(
 device_map = {"": 0} if torch.cuda.is_available() else "cpu"
 
 model = AutoModelForCausalLM.from_pretrained(
-    BASE_MODEL_ID, quantization_config=bnb_config, device_map=device_map,
+    MODEL_ID, quantization_config=bnb_config, device_map=device_map,
     dtype=torch.bfloat16, token=HF_TOKEN, low_cpu_mem_usage=True,
 )
-tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL_ID, token=HF_TOKEN)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, token=HF_TOKEN)
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.unk_token
 
-# ============================================================
-# 2. ЗАГРУЗКА ОБУЧЕННОЙ LoRA ДЛЯ ПРЕФЛОПА
-# ============================================================
-PREFLOP_AVAILABLE = False
-preflop_lora_loaded = False
-
-if os.path.exists(LORA_PATH):
-    try:
-        print(f"\n🎯 Загрузка обученной префлоп-модели из {LORA_PATH}...")
-        model = PeftModel.from_pretrained(model, LORA_PATH)
-        model.eval()
-        PREFLOP_AVAILABLE = True
-        preflop_lora_loaded = True
-        print("✅ Обученная префлоп-модель загружена")
-    except Exception as e:
-        print(f"⚠️ Ошибка загрузки префлоп-модели: {e}")
-        PREFLOP_AVAILABLE = False
-else:
-    print(f"\n⚠️ Префлоп-модель не найдена: {LORA_PATH}")
-    print("   Используется базовая модель для всех стадий")
-
 # ============ LoRA ============
-if os.path.exists(LORA_ONLINE_PATH):
-    print(f"📂 Загружаю LoRA из {LORA_ONLINE_PATH}...")
-    model = PeftModel.from_pretrained(model, LORA_ONLINE_PATH)
+if os.path.exists(LORA_PATH):
+    print(f"📂 Загружаю LoRA из {LORA_PATH}...")
+    model = PeftModel.from_pretrained(model, LORA_PATH)
     print("✅ LoRA загружен.")
 else:
     print(f"🆕 Создаю новый LoRA...")
@@ -142,34 +110,13 @@ MEMORY_LIMIT = 30
 last_loss = 0.0
 training_lock = threading.Lock()
 save_lock = threading.Lock()
-save_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="Saver")
+save_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="LoraSaver")
+stats = {"pretrain_examples": 0, "online_examples": 0, "batches_trained": 0}
 
-stats = {
-    "pretrain_examples": 0,
-    "online_examples": 0,
-    "batches_trained": 0,
-    "preflop_queries": 0,
-    "postflop_queries": 0,
-}
 
 def load_training_buffer():
     """Загружает недоученные примеры с диска"""
     global training_buffer
-
-def load_all_data():
-    """Загружает все сохранённые данные с диска."""
-    global training_buffer, memory_cache, stats
-
-    # Память рук
-    if os.path.exists(MEMORY_FILE):
-        try:
-            with open(MEMORY_FILE, 'r', encoding='utf-8') as f:
-                memory_cache = json.load(f)
-            print(f"📂 Память рук: {len(memory_cache)} записей")
-        except:
-            memory_cache = []
-
-    # Буфер обучения
     if os.path.exists(BUFFER_FILE):
         try:
             with open(BUFFER_FILE, 'r', encoding='utf-8') as f:
@@ -203,10 +150,6 @@ def load_stats():
 def save_stats():
     """Сохраняет статистику"""
     try:
-        with open(MEMORY_FILE, 'w', encoding='utf-8') as f:
-            json.dump(memory_cache[-100:], f, ensure_ascii=False, indent=1)
-        with open(BUFFER_FILE, 'w', encoding='utf-8') as f:
-            json.dump(training_buffer, f, ensure_ascii=False, indent=1)
         with open(STATS_FILE, 'w', encoding='utf-8') as f:
             json.dump(stats, f, ensure_ascii=False, indent=2)
     except Exception as e:
@@ -313,15 +256,13 @@ def save_lora_sync():
 #     return {"status": "trained", "loss": last_loss, "buffer_size": 0}
 
 def train_batch():
-    """Обучение на накопленных примерах."""
     global last_loss, training_buffer, stats
-
     with training_lock:
         if not optimizer or len(training_buffer) < MEMORY_LIMIT:
             # Сохраняем буфер даже если не обучаем
             save_training_buffer()
             return {"status": "waiting", "buffer_size": len(training_buffer)}
-
+        
         batch = training_buffer[:]
         training_buffer = []
         # Сразу сохраняем пустой буфер
@@ -330,17 +271,6 @@ def train_batch():
     print(f"\n🧠 ОБУЧЕНИЕ: {len(batch)} рук...")
     model.train()
     total_loss = 0.0
-
-    # Включаем градиенты для LoRA параметров
-    for name, param in model.named_parameters():
-        if "lora" in name.lower():
-            param.requires_grad = True
-
-    optimizer = torch.optim.AdamW(
-        filter(lambda p: p.requires_grad, model.parameters()),
-        lr=1e-5, weight_decay=0.01
-    )
-
     optimizer.zero_grad()
 
     for i, item in enumerate(batch):
@@ -700,7 +630,6 @@ class ModelHandler(BaseHTTPRequestHandler):
             if length == 0:
                 self._send_error(400, "Empty body")
                 return
-
             raw_body = self.rfile.read(length)
             body = json.loads(raw_body.decode('utf-8'))
 
@@ -716,9 +645,8 @@ class ModelHandler(BaseHTTPRequestHandler):
                 "lesson": body.get("lesson", "")
             }
             add_to_memory(hand_data)
-            stats["online_examples"] += 1
 
-            # Формируем обучающий пример
+            # Формируем обучающую пару из данных реальной игры
             stage = body.get("stage", "flop").lower()
             action = body.get("action_taken", "FOLD")
             outcome = body.get("outcome", "LOSS")
@@ -765,8 +693,7 @@ class ModelHandler(BaseHTTPRequestHandler):
             save_training_buffer()
             
             print(f"📝 В буфере: {len(training_buffer)}/{MEMORY_LIMIT} (всего: {stats['online_examples']})")
-
-            train_status = train_batch()
+            # train_status = train_batch()
             
             # Сохраняем статистику
             save_stats()
@@ -799,27 +726,6 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     allow_reuse_address = True
 
 
-# ============================================================
-# 2. ЗАГРУЗКА ОБУЧЕННОЙ LoRA ДЛЯ ПРЕФЛОПА
-# ============================================================
-PREFLOP_AVAILABLE = False
-preflop_lora_loaded = False
-
-if os.path.exists(LORA_PATH):
-    try:
-        print(f"\n🎯 Загрузка обученной префлоп-модели из {LORA_PATH}...")
-        model = PeftModel.from_pretrained(model, LORA_PATH)
-        model.eval()
-        PREFLOP_AVAILABLE = True
-        preflop_lora_loaded = True
-        print("✅ Обученная префлоп-модель загружена")
-    except Exception as e:
-        print(f"⚠️ Ошибка загрузки префлоп-модели: {e}")
-        PREFLOP_AVAILABLE = False
-else:
-    print(f"\n⚠️ Префлоп-модель не найдена: {LORA_PATH}")
-    print("   Используется базовая модель для всех стадий")
-
 # ============ ЗАГРУЗКА СОХРАНЁННЫХ ДАННЫХ ============
 print("\n📂 Загрузка сохранённых данных...")
 load_memory()
@@ -831,14 +737,13 @@ print(f"   Статистика: {stats}")
 print(f"   Память рук: {len(load_memory())}")
 
 server = ThreadedHTTPServer((HOST, PORT), ModelHandler)
+# # Принудительно сохранить всё
+# curl http://192.168.1.103:8899/save
 
-print()
-print("=" * 60)
-print("🚀 СЕРВЕР ЗАПУЩЕН")
-print("=" * 60)
-print(f"📡 Адрес: http://{HOST}:{PORT}")
-print(f"🎯 Префлоп-модель: {'✅ Обученная' if PREFLOP_AVAILABLE else '⚠️ Базовая'}")
-print(f"📊 Статистика: http://{HOST}:{PORT}/stats")
+# Посмотреть что в буфере
+# curl http://192.168.1.103:8899/buffer
+
+print(f"\n🚀 Сервер запущен: http://{HOST}:{PORT}")
 print(f"🎓 Pretrain: http://{HOST}:{PORT}/pretrain")
 print(f"📊 Статистика: http://{HOST}:{PORT}/stats")
 print(f"📥 Сохранить буфер: http://{HOST}:{PORT}/save")

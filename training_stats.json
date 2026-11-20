@@ -1,5 +1,8 @@
 {
   "pretrain_examples": 13600,
-  "online_examples": 214,
-  "batches_trained": 10
+  "online_examples": 348,
+  "batches_trained": 12,
+  "preflop_queries": 109,
+  "postflop_queries": 58,
+  "fix_response_used": 58
 }

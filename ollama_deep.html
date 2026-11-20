@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Покер: Человек против ИИ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow-x: hidden;
+            /* 🔧 FIX: Предотвращение зума на мобильных при двойном тапе */
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            min-height: 100vh;
+            padding: clamp(6px, 1vh, 15px);
+            /* 🔧 FIX: Гарантированный минимальный размер шрифта 12px для читаемости */
+            font-size: max(12px, clamp(12px, 1.4vh, 16px));
+            color: #fff;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(6px, 1vh, 15px);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: clamp(1.1em, 2.8vh, 2.2em);
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+            line-height: 1.2;
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) clamp(220px, 22vw, 340px);
+            gap: clamp(6px, 1vh, 15px);
+            align-items: stretch;
+            min-height: 0;
+        }
+
+        .poker-table {
+            background: radial-gradient(ellipse at center, #1a5d1a 0%, #0d3d0d 70%, #072707 100%);
+            border: clamp(8px, 1.6vh, 25px) solid #4a2c17;
+            border-radius: 50% / 45%;
+            position: relative;
+            box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.6), 0 15px 40px rgba(0, 0, 0, 0.7), 0 0 0 4px #2a1810;
+            padding: clamp(20px, 4vh, 50px);
+            min-height: clamp(280px, 52vh, 600px);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .center-info {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: clamp(4px, 0.8vh, 12px);
+            z-index: 5;
+            pointer-events: none;
+            max-width: 90%;
+        }
+
+        .pot-display {
+            background: linear-gradient(135deg, #ffd700, #b8860b);
+            color: #000;
+            padding: clamp(6px, 1.2vh, 12px) clamp(14px, 2.5vw, 30px);
+            border-radius: clamp(15px, 2.5vh, 25px);
+            font-size: clamp(0.9em, 1.9vh, 1.4em);
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
+            border: clamp(1px, 0.3vh, 3px) solid #fff;
+            white-space: nowrap;
+        }
+
+        .community-cards {
+            display: flex;
+            gap: clamp(3px, 0.6vw, 10px);
+            padding: clamp(4px, 1vh, 12px) clamp(6px, 1.5vw, 20px);
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: clamp(8px, 1.5vh, 15px);
+            min-height: clamp(50px, 10vh, 100px);
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
+        }
+
+        .stage-display {
+            background: rgba(0, 0, 0, 0.7);
+            padding: clamp(3px, 0.8vh, 8px) clamp(10px, 2vw, 25px);
+            border-radius: clamp(8px, 1.5vh, 15px);
+            font-size: clamp(0.75em, 1.5vh, 1.1em);
+            font-weight: bold;
+            color: #ffd700;
+            border: clamp(1px, 0.3vh, 2px) solid #ffd700;
+            white-space: nowrap;
+        }
+
+        .hand-number {
+            background: rgba(0, 0, 0, 0.7);
+            padding: clamp(2px, 0.5vh, 5px) clamp(6px, 1.2vw, 15px);
+            border-radius: clamp(6px, 1vh, 10px);
+            font-size: clamp(0.65em, 1.3vh, 0.9em);
+            color: #ccc;
+            white-space: nowrap;
+        }
+
+        .card {
+            width: clamp(32px, 4.2vw, 60px);
+            height: clamp(46px, 6vh, 85px);
+            background: white;
+            border-radius: clamp(4px, 0.8vh, 8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.75em, 1.6vh, 1.3em);
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            transition: box-shadow 0.3s, border 0.3s, transform 0.3s;
+            border: clamp(1px, 0.25vh, 2px) solid #333;
+            flex-shrink: 0;
+            /* 🔧 FIX: Предотвращение артефактов при 3D-вращении */
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .card.hearts,
+        .card.diamonds {
+            color: #d32f37;
+        }
+
+        .card.spades,
+        .card.clubs {
+            color: #1a1a1a;
+        }
+
+        .card.back {
+            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+            color: white;
+            border: clamp(1px, 0.25vh, 2px) solid #ffd700;
+        }
+
+        .card.back::before {
+            content: '🂠';
+            font-size: 2em;
+            opacity: 0.8;
+        }
+
+        .card.highlight {
+            box-shadow: 0 0 25px #ffd700, 0 0 40px #ffd700;
+            border: clamp(2px, 0.4vh, 3px) solid #ffd700;
+            animation: pulseHighlight 1.5s infinite;
+        }
+
+        @keyframes pulseHighlight {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px #ffd700, 0 0 35px #ffd700;
+            }
+
+            50% {
+                box-shadow: 0 0 30px #ffd700, 0 0 50px #ffd700;
+            }
+        }
+
+        .player {
+            position: absolute;
+            width: clamp(100px, 13vw, 180px);
+            background: rgba(0, 0, 0, 0.85);
+            border: clamp(1px, 0.3vh, 3px) solid #555;
+            border-radius: clamp(8px, 1.5vh, 15px);
+            padding: clamp(4px, 0.8vh, 12px);
+            text-align: center;
+            backdrop-filter: blur(8px);
+            transition: border-color 0.3s, box-shadow 0.3s, opacity 0.3s, filter 0.3s, background 0.3s;
+        }
+
+        .player.human {
+            border-color: #4caf50;
+            background: rgba(10, 50, 10, 0.9);
+            box-shadow: 0 0 25px rgba(76, 175, 80, 0.5);
+        }
+
+        .player.active-turn {
+            border-color: #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            z-index: 10;
+        }
+
+        .player.winner {
+            border-color: #ffd700;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 140, 0, 0.3));
+            box-shadow: 0 0 50px rgba(255, 215, 0, 1);
+            animation: winnerPulse 1.5s infinite;
+        }
+
+        @keyframes winnerPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+            }
+
+            50% {
+                box-shadow: 0 0 70px rgba(255, 215, 0, 1);
+            }
+        }
+
+        .player.folded {
+            opacity: 0.3;
+            filter: grayscale(80%);
+        }
+
+        .player.eliminated {
+            display: none;
+        }
+
+        .player-name {
+            font-size: clamp(0.65em, 1.4vh, 1.05em);
+            font-weight: bold;
+            margin-bottom: clamp(1px, 0.3vh, 4px);
+            min-height: 1.2em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-stack {
+            font-size: clamp(0.6em, 1.3vh, 0.95em);
+            color: #ffd700;
+            font-weight: bold;
+            margin-bottom: clamp(2px, 0.5vh, 6px);
+            min-height: 1.2em;
+        }
+
+        .player-cards {
+            display: flex;
+            gap: clamp(2px, 0.4vw, 5px);
+            justify-content: center;
+            min-height: clamp(40px, 8vh, 75px);
+            align-items: center;
+        }
+
+        .player-cards .card {
+            width: clamp(26px, 3.4vw, 50px);
+            height: clamp(36px, 5vh, 70px);
+            font-size: clamp(0.6em, 1.2vh, 0.95em);
+        }
+
+        .player-hand-name {
+            font-size: clamp(0.55em, 1.1vh, 0.85em);
+            color: #4caf50;
+            margin-top: clamp(2px, 0.4vh, 6px);
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.5);
+            padding: clamp(1px, 0.2vh, 3px) clamp(4px, 0.8vw, 8px);
+            border-radius: clamp(4px, 0.8vh, 8px);
+            min-height: 1.5em;
+            display: none;
+        }
+
+        .player-hand-name.visible {
+            display: block;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: clamp(1px, 0.15vh, 2px) clamp(3px, 0.5vw, 6px);
+            border-radius: 10px;
+            font-size: clamp(0.5em, 0.9vh, 0.7em);
+            font-weight: bold;
+            margin-left: 3px;
+            vertical-align: middle;
+        }
+
+        .badge.dealer {
+            background: #fff;
+            color: #000;
+        }
+
+        .badge.sb {
+            background: #2196f3;
+            color: #fff;
+        }
+
+        .badge.bb {
+            background: #ff5722;
+            color: #fff;
+        }
+
+        .player-bet {
+            position: absolute;
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: #fff;
+            padding: clamp(2px, 0.4vh, 5px) clamp(6px, 1vw, 12px);
+            border-radius: clamp(8px, 1.5vh, 15px);
+            font-size: clamp(0.6em, 1.2vh, 0.85em);
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+            border: clamp(1px, 0.25vh, 2px) solid #ffd700;
+            white-space: nowrap;
+            z-index: 8;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .player-bet.hidden {
+            opacity: 0;
+        }
+
+        .action-bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            color: #000;
+            padding: clamp(3px, 0.5vh, 6px) clamp(6px, 1vw, 12px);
+            border-radius: clamp(8px, 1.5vh, 15px);
+            font-size: clamp(0.55em, 1.1vh, 0.8em);
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+            z-index: 9;
+            border: clamp(1px, 0.2vh, 2px) solid #333;
+            transition: opacity 0.3s, background 0.3s, color 0.3s;
+            pointer-events: none;
+            transform: translateY(12px);
+        }
+
+        .action-bubble.hidden {
+            opacity: 0;
+        }
+
+        .action-bubble.fold {
+            background: #ffcdd2;
+            color: #b71c1c;
+            border-color: #b71c1c;
+        }
+
+        .action-bubble.check {
+            background: #bbdefb;
+            color: #0d47a1;
+            border-color: #0d47a1;
+        }
+
+        .action-bubble.call {
+            background: #c8e6c9;
+            color: #1b5e20;
+            border-color: #1b5e20;
+        }
+
+        .action-bubble.raise {
+            background: #fff59d;
+            color: #e65100;
+            border-color: #e65100;
+        }
+
+        .action-bubble.thinking {
+            background: #e1bee7;
+            color: #4a148c;
+            border-color: #4a148c;
+        }
+
+        .observer-banner {
+            position: absolute;
+            top: clamp(4px, 1vh, 15px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #7b1fa2, #512da8);
+            padding: clamp(4px, 0.8vh, 8px) clamp(10px, 2vw, 25px);
+            border-radius: clamp(10px, 2vh, 20px);
+            font-weight: bold;
+            font-size: clamp(0.7em, 1.3vh, 1em);
+            z-index: 20;
+            box-shadow: 0 5px 20px rgba(123, 31, 162, 0.7);
+            border: clamp(1px, 0.25vh, 2px) solid #fff;
+            display: none;
+            white-space: nowrap;
+        }
+
+        .observer-banner.visible {
+            display: block;
+            animation: observerPulse 2s infinite;
+        }
+
+        @keyframes observerPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 5px 20px rgba(123, 31, 162, 0.7);
+            }
+
+            50% {
+                box-shadow: 0 5px 30px rgba(123, 31, 162, 1);
+            }
+        }
+
+        .controls {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: clamp(8px, 1.5vh, 15px);
+            padding: clamp(8px, 1.4vh, 18px);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(4px, 0.8vh, 10px);
+            border: clamp(1px, 0.3vh, 2px) solid #444;
+            overflow-y: auto;
+            min-height: 0;
+        }
+
+        .controls h3 {
+            text-align: center;
+            margin-bottom: clamp(2px, 0.5vh, 8px);
+            color: #ffd700;
+            font-size: clamp(0.8em, 1.6vh, 1.2em);
+        }
+
+        .button {
+            padding: clamp(6px, 1.2vh, 14px);
+            border: none;
+            border-radius: clamp(5px, 1vh, 10px);
+            font-size: clamp(0.7em, 1.4vh, 1em);
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+            text-transform: uppercase;
+            border: 2px solid transparent;
+        }
+
+        .button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .button.fold {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .button.check {
+            background: #1976d2;
+            color: white;
+        }
+
+        .button.call {
+            background: #388e3c;
+            color: white;
+        }
+
+        .button.raise {
+            background: #f57c00;
+            color: white;
+        }
+
+        .raise-slider-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid #555;
+            border-radius: clamp(5px, 1vh, 10px);
+            padding: clamp(5px, 0.8vh, 10px) clamp(6px, 1vw, 12px);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(2px, 0.4vh, 6px);
+            width: 100%;
+        }
+
+        .raise-slider-box .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: clamp(0.6em, 1.2vh, 0.85em);
+            color: #ccc;
+            gap: 6px;
+        }
+
+        .raise-slider-box .value {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: clamp(0.85em, 1.6vh, 1.1em);
+        }
+
+        .raise-slider-box input[type="range"] {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            border: none;
+            background: transparent;
+            accent-color: #f57c00;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        .raise-slider-box .bounds {
+            display: flex;
+            justify-content: space-between;
+            font-size: clamp(0.5em, 1vh, 0.75em);
+            color: #888;
+        }
+
+        .hand-info {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: clamp(6px, 1.2vh, 12px);
+            padding: clamp(6px, 1vh, 12px);
+            text-align: center;
+            border: 1px solid #444;
+            font-size: clamp(0.65em, 1.2vh, 0.9em);
+        }
+
+        .hand-info .strength {
+            font-size: clamp(0.9em, 1.8vh, 1.3em);
+            color: #ffd700;
+            margin: clamp(1px, 0.3vh, 4px) 0;
+            font-weight: bold;
+            min-height: 1.4em;
+        }
+
+        .hand-info .desc {
+            font-size: clamp(0.7em, 1.2vh, 0.9em);
+            color: #ccc;
+            margin-top: clamp(1px, 0.3vh, 4px);
+            min-height: 1.2em;
+        }
+
+        .log-panel {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: clamp(8px, 1.5vh, 15px);
+            padding: clamp(6px, 1.2vh, 15px);
+            max-height: clamp(100px, 18vh, 280px);
+            overflow-y: auto;
+            border: clamp(1px, 0.3vh, 2px) solid #444;
+        }
+
+        .log-panel h3 {
+            margin-bottom: clamp(3px, 0.6vh, 8px);
+            color: #ffd700;
+            font-size: clamp(0.75em, 1.4vh, 1.1em);
+        }
+
+        .log-entry {
+            padding: clamp(2px, 0.4vh, 6px) clamp(4px, 0.8vw, 10px);
+            margin: clamp(1px, 0.3vh, 4px) 0;
+            border-left: clamp(2px, 0.4vh, 4px) solid #ffd700;
+            padding-left: clamp(6px, 1vw, 12px);
+            font-size: clamp(0.6em, 1.2vh, 0.9em);
+            border-radius: 0 6px 6px 0;
+            background: rgba(255, 255, 255, 0.03);
+            word-break: break-word;
+        }
+
+        .log-entry.error {
+            border-left-color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .log-entry.info {
+            border-left-color: #2196f3;
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .log-entry.win {
+            border-left-color: #4caf50;
+            background: rgba(76, 175, 80, 0.15);
+            font-weight: bold;
+        }
+
+        .log-entry.ai {
+            border-left-color: #ff9800;
+            background: rgba(255, 152, 0, 0.08);
+            font-size: clamp(0.55em, 1.1vh, 0.82em);
+            color: #ffcc80;
+        }
+
+        .settings {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: clamp(8px, 1.5vh, 15px);
+            padding: clamp(6px, 1.2vh, 18px);
+            border: clamp(1px, 0.3vh, 2px) solid #444;
+            display: flex;
+            flex-wrap: wrap;
+            gap: clamp(4px, 0.8vh, 10px);
+            align-items: flex-end;
+        }
+
+        .settings h3 {
+            width: 100%;
+            margin-bottom: clamp(2px, 0.4vh, 6px);
+            color: #ffd700;
+            font-size: clamp(0.75em, 1.4vh, 1.1em);
+        }
+
+        .settings .field {
+            display: flex;
+            flex-direction: column;
+            flex: 1 1 160px;
+            min-width: 0;
+        }
+
+        .settings label {
+            font-size: clamp(0.6em, 1.1vh, 0.9em);
+            margin-bottom: 2px;
+        }
+
+        .settings input[type="number"],
+        .settings input[type="text"] {
+            width: 100%;
+            padding: clamp(4px, 0.8vh, 10px);
+            border: 2px solid #ffd700;
+            border-radius: clamp(4px, 0.8vh, 8px);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: clamp(0.65em, 1.2vh, 1em);
+            box-sizing: border-box;
+            min-width: 0;
+        }
+
+        .settings .checkbox-field {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex: 0 0 auto;
+            padding: clamp(4px, 0.8vh, 8px) 0;
+        }
+
+        .settings .checkbox-field input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #4caf50;
+            cursor: pointer;
+        }
+
+        .settings .checkbox-field label {
+            margin: 0;
+            cursor: pointer;
+            font-size: clamp(0.65em, 1.2vh, 0.95em);
+        }
+
+        .settings .note {
+            flex: 1 1 100%;
+            font-size: clamp(0.55em, 1vh, 0.82em);
+            color: #ffab91;
+            padding: clamp(4px, 0.8vh, 10px);
+            background: rgba(255, 87, 34, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #ff5722;
+        }
+
+        .settings .start-btn {
+            flex: 0 0 auto;
+            padding: clamp(6px, 1.2vh, 14px) clamp(10px, 2vw, 20px);
+            font-size: clamp(0.7em, 1.4vh, 1em);
+        }
+
+        .legend {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: clamp(6px, 1.2vh, 15px);
+            padding: clamp(5px, 1vh, 12px);
+            border: clamp(1px, 0.3vh, 2px) solid #444;
+            font-size: clamp(0.55em, 1.1vh, 0.85em);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: clamp(3px, 0.6vw, 8px);
+            margin: clamp(1px, 0.3vh, 5px) 0;
+        }
+
+        .showdown-banner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+            padding: clamp(15px, 3vh, 40px) clamp(20px, 4vw, 60px);
+            border-radius: clamp(10px, 2vh, 25px);
+            border: clamp(3px, 0.6vh, 6px) solid #ffd700;
+            z-index: 1000;
+            text-align: center;
+            animation: bannerSlide 0.6s;
+            box-shadow: 0 0 150px rgba(255, 215, 0, 0.6);
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: auto;
+            display: none;
+        }
+
+        .showdown-banner.visible {
+            display: block;
+        }
+
+        .continue-hint {
+            position: absolute;
+            bottom: clamp(8px, 2vh, 22px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.78);
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            padding: clamp(4px, 0.8vh, 8px) clamp(12px, 2vw, 22px);
+            border-radius: 20px;
+            font-size: clamp(0.7em, 1.4vh, 0.95em);
+            font-weight: bold;
+            white-space: nowrap;
+            z-index: 15;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+        }
+
+        .continue-hint.visible {
+            opacity: 1;
+        }
+
+        @keyframes bannerSlide {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -70%);
+            }
+
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .showdown-banner h2 {
+            font-size: clamp(1.2em, 3vh, 2.2em);
+            color: #ffd700;
+            margin-bottom: clamp(8px, 1.5vh, 20px);
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.7);
+        }
+
+        .showdown-banner .info-row {
+            font-size: clamp(0.85em, 1.8vh, 1.3em);
+            margin: clamp(4px, 0.8vh, 12px) 0;
+        }
+
+        .showdown-banner .players-hands {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(6px, 1.2vh, 14px);
+            margin: clamp(10px, 2vh, 25px) 0;
+        }
+
+        .showdown-banner .player-hand-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(6px, 1vw, 12px);
+            padding: clamp(6px, 1vh, 10px) clamp(8px, 1.5vw, 16px);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: clamp(6px, 1vh, 10px);
+            flex-wrap: wrap;
+        }
+
+        .showdown-banner .player-hand-row .pname {
+            font-weight: bold;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .showdown-banner .player-hand-row .pcards {
+            display: flex;
+            gap: clamp(3px, 0.5vw, 6px);
+        }
+
+        .showdown-banner .player-hand-row .presult {
+            color: #4caf50;
+            font-weight: bold;
+            min-width: 100px;
+            text-align: left;
+        }
+
+        .showdown-banner .player-hand-row.winner-row {
+            background: rgba(255, 215, 0, 0.15);
+            border: 2px solid #ffd700;
+        }
+
+        .showdown-banner .player-hand-row .card {
+            width: clamp(30px, 4.5vw, 45px);
+            height: clamp(42px, 6.5vh, 65px);
+            font-size: clamp(0.7em, 1.5vh, 1em);
+        }
+
+        .showdown-banner .timer {
+            margin-top: clamp(8px, 1.5vh, 20px);
+            font-size: clamp(0.65em, 1.3vh, 1em);
+            color: #aaa;
+        }
+
+        .ai-debug-panel {
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: clamp(6px, 1.2vh, 15px);
+            padding: clamp(5px, 1vh, 12px);
+            border: clamp(1px, 0.3vh, 2px) solid #444;
+            font-size: clamp(0.6em, 1.1vh, 0.85em);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .ai-debug-panel h3 {
+            color: #ffd700;
+            font-size: clamp(0.75em, 1.4vh, 1.1em);
+            margin-bottom: 4px;
+        }
+
+        @media (max-width: 1200px) {
+            .game-area {
+                grid-template-columns: minmax(0, 1fr) clamp(200px, 26vw, 300px);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+
+            .poker-table {
+                min-height: clamp(240px, 40vh, 420px);
+            }
+
+            .controls {
+                max-height: none;
+            }
+
+            .player {
+                width: clamp(80px, 20vw, 130px);
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 4px;
+            }
+
+            .poker-table {
+                padding: clamp(10px, 2vh, 25px);
+                min-height: 220px;
+                border-width: 8px;
+            }
+
+            .player {
+                width: clamp(70px, 22vw, 100px);
+                padding: 3px;
+            }
+
+            .player-cards .card {
+                width: 22px;
+                height: 32px;
+                font-size: 0.6em;
+            }
+
+            .community-cards .card {
+                width: 28px;
+                height: 40px;
+                font-size: 0.7em;
+            }
+
+            .settings {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        .card.flipping {
+            animation: cardFlip 0.5s ease-in-out;
+        }
+
+        @keyframes cardFlip {
+            0% {
+                transform: rotateY(0deg);
+            }
+
+            50% {
+                transform: rotateY(90deg);
+            }
+
+            100% {
+                transform: rotateY(0deg);
+            }
+        }
+
+        .card.dealing {
+            animation: cardDeal 0.3s ease-out;
+        }
+
+        @keyframes cardDeal {
+            0% {
+                transform: translateY(-30px) scale(0.8);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ==== Анимация перетока банка ==== */
+        .chip-fly {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            z-index: 60;
+            pointer-events: none;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.55), inset 0 0 0 2px rgba(255, 255, 255, 0.75);
+        }
+
+        .chip-fly::after {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 255, 255, 0.85);
+        }
+
+        .chip-fly.gold {
+            background: radial-gradient(circle at 35% 30%, #ffe680, #d4a017 70%, #8a6508);
+        }
+
+        .chip-fly.red {
+            background: radial-gradient(circle at 35% 30%, #ff9a9a, #d32f2f 70%, #7f0000);
+        }
+
+        .chip-fly.blue {
+            background: radial-gradient(circle at 35% 30%, #90caf9, #1976d2 70%, #0d2f6b);
+        }
+
+        .chip-fly.green {
+            background: radial-gradient(circle at 35% 30%, #a5d6a7, #388e3c 70%, #1b4d1b);
+        }
+
+        .gain-float {
+            position: absolute;
+            left: 50%;
+            top: -6px;
+            transform: translateX(-50%);
+            color: #7cfc90;
+            font-weight: 800;
+            font-size: clamp(0.7em, 1.4vh, 1em);
+            text-shadow: 0 0 10px rgba(80, 255, 120, 0.8);
+            animation: gainRise 1.1s ease-out forwards;
+            pointer-events: none;
+            z-index: 70;
+            white-space: nowrap;
+        }
+
+        @keyframes gainRise {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, 6px) scale(0.8);
+            }
+
+            15% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -26px) scale(1.15);
+            }
+        }
+
+        .player-stack.stack-bump {
+            animation: stackBump 0.6s ease-out;
+        }
+
+        @keyframes stackBump {
+            0% {
+                transform: scale(1);
+            }
+
+            30% {
+                transform: scale(1.35);
+                color: #fff;
+                text-shadow: 0 0 14px #ffd700;
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .pot-display.pot-drain {
+            animation: potDrain 1s ease-in-out infinite;
+        }
+
+        @keyframes potDrain {
+
+            0%,
+            100% {
+                box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 5px 34px rgba(255, 215, 0, 0.95);
+                transform: scale(1.04);
+            }
+        }
+
+        .stats-btn {
+            background: linear-gradient(135deg, #2b5876, #4e4376);
+            color: #fff;
+            flex: 0 0 auto;
+        }
+
+        .stats-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(8px, 2vw, 24px);
+            background: radial-gradient(circle at 50% 30%, rgba(43, 88, 118, 0.35), rgba(5, 10, 14, 0.88) 70%);
+            backdrop-filter: blur(7px);
+        }
+
+        .stats-overlay[hidden] {
+            display: none;
+        }
+
+        .stats-panel {
+            width: min(1180px, 100%);
+            max-height: min(88vh, 860px);
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(160deg, #101a20 0%, #0b1216 60%, #0a0f13 100%);
+            border: 1px solid rgba(255, 215, 0, 0.45);
+            border-radius: 16px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+            overflow: hidden;
+            color: #e8eef2;
+            animation: statsIn 0.28s cubic-bezier(.2, .9, .3, 1);
+        }
+
+        @keyframes statsIn {
+            from {
+                opacity: 0;
+                transform: translateY(18px) scale(0.97);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .stats-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.22);
+            background: linear-gradient(90deg, rgba(255, 215, 0, 0.10), rgba(78, 67, 118, 0.18));
+        }
+
+        .stats-head h2 {
+            margin: 0;
+            font-size: clamp(1em, 2.2vh, 1.4em);
+            color: #ffd700;
+            letter-spacing: 0.3px;
+        }
+
+        .stats-close {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .stats-close:hover {
+            background: rgba(255, 80, 80, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            padding: 14px 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.045);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 11px;
+            padding: 10px 12px;
+        }
+
+        .stat-card .k {
+            font-size: 0.72em;
+            color: #93a4ad;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .v {
+            font-size: 1.25em;
+            font-weight: 800;
+            color: #ffd700;
+            margin-top: 3px;
+        }
+
+        .stat-card.green .v {
+            color: #69f0ae;
+        }
+
+        .stat-card.blue .v {
+            color: #64b5f6;
+        }
+
+        .stats-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 0 20px 12px;
+            align-items: center;
+        }
+
+        .stats-toolbar input,
+        .stats-toolbar select {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 215, 0, 0.35);
+            color: #fff;
+            border-radius: 9px;
+            padding: 8px 11px;
+            font-size: 0.85em;
+            outline: none;
+        }
+
+        .stats-toolbar input {
+            flex: 1 1 180px;
+            min-width: 120px;
+        }
+
+        .stats-toolbar input:focus,
+        .stats-toolbar select:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.18);
+        }
+
+        .stats-toolbar select option {
+            background: #101a20;
+        }
+
+        .stats-tool-btn {
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.07);
+            color: #e8eef2;
+            border-radius: 9px;
+            padding: 8px 13px;
+            font-size: 0.82em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+
+        .stats-tool-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            transform: translateY(-1px);
+        }
+
+        .stats-tool-btn.danger {
+            border-color: rgba(255, 90, 90, 0.5);
+            color: #ff8a80;
+        }
+
+        .stats-tool-btn.danger:hover {
+            background: rgba(255, 80, 80, 0.2);
+        }
+
+        .stats-table-wrap {
+            flex: 1;
+            overflow: auto;
+            margin: 0 20px;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 11px;
+            scrollbar-width: thin;
+            scrollbar-color: #d4a017 #0c1418;
+        }
+
+        .stats-table-wrap::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        .stats-table-wrap::-webkit-scrollbar-track {
+            background: #0c1418;
+            border-radius: 8px;
+        }
+
+        .stats-table-wrap::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #ffd76a, #b8860b);
+            border-radius: 8px;
+            border: 2px solid #0c1418;
+        }
+
+        .stats-table-wrap::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #ffe680, #d4a017);
+        }
+
+        .stats-table {
+            width: 100%;
+            min-width: 1080px;
+            border-collapse: collapse;
+            font-size: 0.82em;
+        }
+
+        .stats-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #14212a;
+            color: #ffd700;
+            text-align: left;
+            padding: 10px 12px;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+            white-space: nowrap;
+        }
+
+        .stats-table tbody td {
+            padding: 9px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+            white-space: nowrap;
+        }
+
+        .stats-table tbody tr {
+            transition: background 0.15s;
+        }
+
+        .stats-table tbody tr:hover {
+            background: rgba(255, 215, 0, 0.06);
+        }
+
+        .stats-table tbody tr.human {
+            background: rgba(76, 175, 80, 0.12);
+        }
+
+        .stats-table tbody tr.human:hover {
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .stats-table tbody tr.ai .pname-cell {
+            color: #90caf9;
+        }
+
+        .pname-cell {
+            font-weight: 800;
+        }
+
+        .pname-cell .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 7px;
+        }
+
+        .pname-cell .dot.h {
+            background: #69f0ae;
+            box-shadow: 0 0 8px #69f0ae;
+        }
+
+        .pname-cell .dot.a {
+            background: #64b5f6;
+        }
+
+        .wr-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 110px;
+        }
+
+        .wr-bar {
+            flex: 1;
+            height: 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .wr-bar i {
+            display: block;
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #ff9800, #ffd700, #69f0ae);
+        }
+
+        .money-pos {
+            color: #69f0ae;
+            font-weight: 700;
+        }
+
+        .money-neg {
+            color: #ff8a80;
+            font-weight: 700;
+        }
+
+        .money-zero {
+            color: #93a4ad;
+        }
+
+        .stats-empty {
+            padding: 34px;
+            text-align: center;
+            color: #93a4ad;
+        }
+
+        .stats-foot {
+            padding: 11px 20px 15px;
+            font-size: 0.74em;
+            color: #7d8f99;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="settings">
+            <h3>⚙️ Настройки</h3>
+            <div class="field">
+                <label>Количество ИИ (1-8):</label>
+                <input type="number" id="aiCount" min="1" max="8" value="5">
+            </div>
+            <div class="checkbox-field">
+                <input type="checkbox" id="payoutSound" checked>
+                <label for="payoutSound">🔊 Звук фишек</label>
+            </div>
+            <div class="checkbox-field">
+                <input type="checkbox" id="showAllCards" checked>
+                <label for="showAllCards">👁️ Открытые карты (отладка)</label>
+            </div>
+            <button class="button stats-btn" id="statsBtn" type="button">📊 Статистика игроков</button>
+            <button class="button call start-btn" onclick="startGame()">🎮 Начать игру</button>
+        </div>
+
+        <div class="game-area">
+            <div class="observer-banner" id="observerBanner">👁️ Режим наблюдения: карты ИИ открыты</div>
+            <div class="continue-hint" id="continueHint"></div>
+            <div class="poker-table" id="pokerTable">
+
+                <div class="center-info">
+                    <div class="hand-number" id="handNumber">Раздача #0</div>
+                    <div class="pot-display" id="potDisplay">Банк: $0</div>
+                    <div class="community-cards" id="communityCards"></div>
+                    <div class="stage-display" id="stageDisplay">Префлоп</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <h3>🎯 Твой ход</h3>
+                <div class="hand-info">
+                    <div>📊 Твоя рука:</div>
+                    <div class="strength" id="handStrength">—</div>
+                    <div class="desc" id="handDescription">Ожидание...</div>
+                </div>
+                <div class="raise-slider-box">
+                    <div class="row">
+                        <span>Сумма рейза:</span>
+                        <span class="value" id="raiseValue">$0</span>
+                    </div>
+                    <input type="range" id="raiseSlider" min="0" max="100" step="10" value="10" disabled>
+                    <div class="bounds">
+                        <span id="raiseMinLabel">min $0</span>
+                        <span id="raiseMaxLabel">max $0</span>
+                    </div>
+                </div>
+                <button class="button fold" id="foldBtn" onclick="playerAction('fold')" disabled>👎 Фолд</button>
+                <button class="button check" id="checkBtn" onclick="playerAction('check')" disabled>✋ Чек</button>
+                <button class="button call" id="callBtn" onclick="playerAction('call')" disabled>✅ Колл</button>
+                <button class="button raise" id="raiseBtn" onclick="playerAction('raise')" disabled>🔥 Рейз</button>
+
+                <div class="legend">
+                    <strong>📖 Легенда:</strong>
+                    <div class="legend-item"><span class="badge dealer">D</span> Дилер</div>
+                    <div class="legend-item"><span class="badge sb">SB</span> Малый блайнд</div>
+                    <div class="legend-item"><span class="badge bb">BB</span> Большой блайнд</div>
+                    <div class="legend-item">💭 Облачко = последнее действие</div>
+                    <div class="legend-item">💰 Фишка = текущая ставка</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="log-panel">
+            <h3>📜 История действий</h3>
+            <div id="logContainer"></div>
+        </div>
+
+        <div class="ai-debug-panel" id="aiDebugPanel">
+            <div>Статус: <span id="aiStatus">Ожидание</span></div>
+            <div>Используется последних раздач для online обучения: <span id="aiBuffer">0 / 100</span></div>
+            <div>Loss: <span id="aiLoss">0</span> | Win: <span id="aiWin">0</span></div>
+        </div>
+    </div>
+
+    <div class="showdown-banner" id="showdownBanner"></div>
+
+<script>
+    // ==== КОНСТАНТЫ ====
+    const DELAY_AI_THINK = 300;
+    const DELAY_AI_ACTION = 600;
+    const DELAY_STAGE = 800;
+    const DELAY_SHOWDOWN = 5000;
+    const DELAY_NEXT_HAND = 500;
+    const SB = 5, BB = 10, START = 1000;
+    const AI_FETCH_TIMEOUT = 60000;
+    const AI_SERVER_URL = "http://192.168.1.103:8899";
+    const SHOWDOWN_CONTINUE_MS = 20000;
+    const SHOWDOWN_ELIMINATED_MS = 8000;
+
+    // ==== ГЛОБАЛЬНОЕ СОСТОЯНИЕ ====
+    let G = {
+        players: [], deck: null, comm: [], pot: 0, curBet: 0,
+        dealerPos: 0, sbPos: -1, bbPos: -1, stage: 'Префлоп', handNum: 0,
+        playing: false, humanFolded: false, currentTurnIdx: -1, showdownMode: false,
+        playerSlots: [], bettingActive: false, showAllCards: true,
+        currentHandId: 0,
+        lastRaiseSize: BB,
+    };
+
+    let aiDebugInfo = { loraActive: false, bufferSize: 0, lastLoss: 0, lastWin: 0, status: 'Ожидание' };
+    let playerActionResolver = null;
+    function minRaiseTo() { return G.curBet + G.lastRaiseSize; }
+
+    // ==== КАРТЫ ====
+    class Card {
+        constructor(rank, suit) { this.rank = rank; this.suit = suit; this.id = `${rank}${suit}`; }
+        toString() { const n = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' }; return `${n[this.rank] || this.rank}${this.suit}`; }
+        getSuitClass() { return { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' }[this.suit]; }
+    }
+
+    class Deck {
+        constructor() { this.cards = []; this.reset(); }
+        reset() {
+            this.cards = [];
+            for (let r = 2; r <= 14; r++)
+                for (let s of ['♠', '♥', '♦', '♣']) this.cards.push(new Card(r, s));
+            this.shuffle();
+        }
+        shuffle() {
+            for (let i = this.cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+            }
+        }
+        deal(n = 1) { return this.cards.splice(-n, n); }
+    }
+
+    class HandEvaluator {
+        static CAT = { 8: "Роял-флеш", 7: "Стрит-флеш", 6: "Каре", 5: "Фулл-хаус", 4: "Флеш", 3: "Стрит", 2: "Сет", 1: "Две пары", 0: "Пара", '-1': "Старшая карта" };
+
+        static evaluate(cards, holeCards = null) {
+            const holeIds = holeCards ? new Set(holeCards.map(c => c.id)) : null;
+            let best = null, bestCards = null, bestHoleUsed = Infinity;
+
+            for (let combo of this.combinations(cards, 5)) {
+                const score = this.score5(combo);
+                const c = best === null ? 1 : this.cmp(score, best);
+                if (c > 0) {
+                    best = score;
+                    bestCards = combo;
+                    bestHoleUsed = holeIds ? combo.filter(x => holeIds.has(x.id)).length : 0;
+                } else if (c === 0 && holeIds) {
+                    const used = combo.filter(x => holeIds.has(x.id)).length;
+                    if (used < bestHoleUsed) { bestCards = combo; bestHoleUsed = used; }
+                }
+            }
+
+            let keyCards = [];
+            if (bestCards && best) keyCards = this.findKeyCards(bestCards, best[0]);
+            return { score: best, cards: bestCards || [], keyCards };
+        }
+
+        static findKeyCards(cards, cat) {
+            if (!cards || !cards.length) return [];
+            const counts = {};
+            cards.forEach(c => counts[c.rank] = (counts[c.rank] || 0) + 1);
+            const sortedByCount = Object.entries(counts).map(([r, c]) => ({ rank: parseInt(r), cnt: c })).sort((a, b) => b.cnt - a.cnt || b.rank - a.rank);
+
+            if (cat === -1) { const m = Math.max(...cards.map(c => c.rank)); return cards.filter(c => c.rank === m); }
+            if (cat === 0) { const p = sortedByCount[0].rank; return cards.filter(c => c.rank === p); }
+            if (cat === 1) { const pr = sortedByCount.slice(0, 2).map(x => x.rank); return cards.filter(c => pr.includes(c.rank)); }
+            if (cat === 2) { const s = sortedByCount[0].rank; return cards.filter(c => c.rank === s); }
+            if (cat === 3 || cat === 4 || cat === 5 || cat === 7 || cat === 8) return cards;
+            if (cat === 6) { const q = sortedByCount[0].rank; return cards.filter(c => c.rank === q); }
+            return cards;
+        }
+
+        static combinations(arr, k) {
+            const result = [], combo = [];
+            (function bt(s) {
+                if (combo.length === k) { result.push([...combo]); return; }
+                for (let i = s; i < arr.length; i++) { combo.push(arr[i]); bt(i + 1); combo.pop(); }
+            })(0);
+            return result;
+        }
+
+        static score5(cards) {
+            const suits = cards.map(c => c.suit);
+            const isFlush = new Set(suits).size === 1;
+            const rankCounts = {};
+            cards.forEach(c => rankCounts[c.rank] = (rankCounts[c.rank] || 0) + 1);
+            const sortedItems = Object.entries(rankCounts)
+                .map(([rank, count]) => ({ rank: parseInt(rank), count }))
+                .sort((a, b) => b.count - a.count || b.rank - a.rank);
+            let compareRanks = [];
+            sortedItems.forEach(item => {
+                for (let i = 0; i < item.count; i++) compareRanks.push(item.rank);
+            });
+            let isStraight = false;
+            let straightHigh = 0;
+            const uniqueRanks = [...new Set(cards.map(c => c.rank))].sort((a, b) => b - a);
+            if (uniqueRanks.length === 5) {
+                if (uniqueRanks[0] - uniqueRanks[4] === 4) { isStraight = true; straightHigh = uniqueRanks[0]; }
+                else if (uniqueRanks[0] === 14 && uniqueRanks[1] === 5 && uniqueRanks[2] === 4 && uniqueRanks[3] === 3 && uniqueRanks[4] === 2) { isStraight = true; straightHigh = 5; }
+            }
+            let cat;
+            if (isFlush && isStraight) cat = straightHigh === 14 ? 8 : 7;
+            else if (sortedItems[0].count === 4) cat = 6;
+            else if (sortedItems[0].count === 3 && sortedItems[1].count === 2) cat = 5;
+            else if (isFlush) cat = 4;
+            else if (isStraight) cat = 3;
+            else if (sortedItems[0].count === 3) cat = 2;
+            else if (sortedItems[0].count === 2 && sortedItems[1].count === 2) cat = 1;
+            else if (sortedItems[0].count === 2) cat = 0;
+            else cat = -1;
+            if (isStraight && straightHigh === 5) {
+                compareRanks = compareRanks.map(r => r === 14 ? 1 : r).sort((a, b) => b - a);
+            } else if (isFlush || isStraight) {
+                compareRanks = uniqueRanks;
+            }
+            return [cat, compareRanks];
+        }
+
+        static cmp(a, b) {
+            if (a[0] !== b[0]) return a[0] - b[0];
+            for (let i = 0; i < Math.min(a[1].length, b[1].length); i++) {
+                if (a[1][i] !== b[1][i]) return a[1][i] - b[1][i];
+            }
+            return 0;
+        }
+
+        static catName(score) { try { return this.CAT[score[0]] || "?"; } catch (e) { return "?"; } }
+
+        static preflop(cards) {
+            if (cards.length < 2) return 0;
+            const [r1, r2] = [cards[0].rank, cards[1].rank].sort((a, b) => b - a);
+            const suited = cards[0].suit === cards[1].suit;
+            if (r1 === r2) return Math.min(0.5 + (r1 - 2) / 24, 1);
+            let s = (r1 + r2) / 28 * 0.4;
+            if (suited) s += 0.1;
+            if (r1 - r2 <= 2) s += 0.05;
+            if (r1 === 14) s += 0.1;
+            return Math.min(Math.max(s, 0), 1);
+        }
+
+        static effective(cards, community, stage) {
+            if (!community || !community.length) return this.preflop(cards);
+            const all = [...cards, ...community];
+            const r = this.evaluate(all);
+            const cat = r.score[0];
+            const catMap = { '-1': 0.15, 0: 0.30, 1: 0.45, 2: 0.65, 3: 0.75, 4: 0.82, 5: 0.90, 6: 0.96, 7: 0.98, 8: 1.00 };
+            let base = catMap[cat] ?? 0.15;
+            if (stage !== 'Ривер' && cat <= 1) {
+                const sc = {};
+                all.forEach(c => sc[c.suit] = (sc[c.suit] || 0) + 1);
+                for (let v of Object.values(sc)) if (v === 4) { base += 0.08; break; }
+                const rs = [...new Set(all.map(c => c.rank))];
+                const windows = [];
+                for (let st = 2; st <= 10; st++) windows.push([st, st + 1, st + 2, st + 3, st + 4]);
+                windows.push([14, 2, 3, 4, 5]);
+                for (const w of windows) {
+                    if (w.filter(r => rs.includes(r)).length === 4) { base += 0.05; break; }
+                }
+            }
+            return Math.min(base, 1);
+        }
+
+        static strDesc(s) {
+            if (s >= 0.8) return "очень сильная";
+            if (s >= 0.6) return "сильная";
+            if (s >= 0.4) return "средняя";
+            if (s >= 0.2) return "слабая";
+            return "очень слабая";
+        }
+    }
+
+    // ==== АНАЛИЗ БОРДА ====
+    class BoardAnalyzer {
+        static analyze(community, myCards) {
+            const result = { flushPossible: false, flushDraw: false, straightPossible: false, straightDraw: false, paired: false, tripsOnBoard: false, highCards: 0, danger: 0, texture: 'dry' };
+            if (!community || community.length === 0) return result;
+            const boardRanks = community.map(c => c.rank);
+            const suitCounts = {};
+            for (let c of community) suitCounts[c.suit] = (suitCounts[c.suit] || 0) + 1;
+            const maxSuitOnBoard = Math.max(...Object.values(suitCounts), 0);
+            if (maxSuitOnBoard >= 4) result.flushPossible = true;
+            else if (maxSuitOnBoard === 3) result.flushDraw = true;
+            const boardUniqueRanks = [...new Set(community.map(c => c.rank))].sort((a, b) => a - b);
+            let maxInWindow = 0;
+            for (let start = 2; start <= 10; start++) {
+                const window = new Set();
+                for (let i = start; i < start + 5; i++) window.add(i);
+                const cnt = boardUniqueRanks.filter(r => window.has(r)).length;
+                if (cnt > maxInWindow) maxInWindow = cnt;
+            }
+            if (boardUniqueRanks.includes(14)) {
+                const lowWindow = new Set([14, 2, 3, 4, 5]);
+                const cnt = boardUniqueRanks.filter(r => lowWindow.has(r)).length;
+                if (cnt > maxInWindow) maxInWindow = cnt;
+            }
+            if (maxInWindow >= 5) result.straightPossible = true;
+            else if (maxInWindow === 4) result.straightDraw = true;
+            const rankCounts = {};
+            boardRanks.forEach(r => rankCounts[r] = (rankCounts[r] || 0) + 1);
+            const boardCounts = Object.values(rankCounts).sort((a, b) => b - a);
+            if (boardCounts[0] >= 2) result.paired = true;
+            if (boardCounts[0] >= 3) result.tripsOnBoard = true;
+            result.highCards = boardRanks.filter(r => r >= 10).length;
+            let danger = 0;
+            if (result.flushPossible) danger += 0.35;
+            else if (result.flushDraw) danger += 0.15;
+            if (result.straightPossible) danger += 0.25;
+            else if (result.straightDraw) danger += 0.10;
+            if (result.tripsOnBoard) danger += 0.20;
+            else if (result.paired) danger += 0.08;
+            danger += result.highCards * 0.03;
+            result.danger = Math.min(danger, 1);
+            if (result.danger >= 0.5) result.texture = 'very_wet';
+            else if (result.danger >= 0.25) result.texture = 'wet';
+            return result;
+        }
+    }
+
+    class Player {
+        constructor(name, stack, isHuman = false, style = null) {
+            this.name = name; this.stack = stack; this.cards = [];
+            this.currentBet = 0;
+            this.totalContributed = 0;
+            this.folded = false; this.eliminated = false;
+            this.isHuman = isHuman; this.lastAction = null; this.handName = "";
+            this.bestCards = []; this.keyCards = []; this.winner = false;
+            this.style = style; this.raisesThisStage = 0;
+            this.actedThisStage = false;
+            this.lastServerAction = null;
+        }
+        reset() {
+            this.cards = []; this.currentBet = 0;
+            this.totalContributed = 0;
+            this.folded = false;
+            this.lastAction = null; this.handName = "";
+            this.bestCards = []; this.keyCards = [];
+            this.winner = false; this.raisesThisStage = 0;
+            this.actedThisStage = false;
+        }
+    }
+
+    // ==== УТИЛИТЫ ====
+    const activeChips = new Set();
+    let audioCtx = null;
+    let payoutSoundOn = true;
+    let lastClink = 0;
+
+    function ensureAudio() {
+        if (!audioCtx) {
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { audioCtx = null; }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function chipClink() {
+        if (!payoutSoundOn || !audioCtx) return;
+        const now = performance.now();
+        if (now - lastClink < 55) return;
+        lastClink = now;
+        const t = audioCtx.currentTime;
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(1700 + Math.random() * 700, t);
+        o.frequency.exponentialRampToValueAtTime(520, t + 0.09);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.10, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+        o.connect(g).connect(audioCtx.destination);
+        o.start(t);
+        o.stop(t + 0.14);
+    }
+
+    let displayPotOverride = null;
+    const displayStackOverrides = new Map();
+
+    function fmtMoney(n) { return '$' + Math.round(n).toLocaleString('ru-RU'); }
+
+    function renderMoney() {
+        updatePot();
+        displayStackOverrides.forEach((v, p) => {
+            const slot = G.playerSlots[G.players.indexOf(p)];
+            if (slot) slot.stackEl.textContent = fmtMoney(v);
+        });
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    function log(msg, type = '') {
+        const c = document.getElementById('logContainer');
+        if (!c) return;
+        const e = document.createElement('div');
+        e.className = `log-entry ${type}`;
+        e.textContent = msg;
+        c.insertBefore(e, c.firstChild);
+        while (c.children.length > 150) c.removeChild(c.lastChild);
+    }
+
+    function fetchWithTimeout(url, options = {}, timeout = AI_FETCH_TIMEOUT) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeout);
+        return fetch(url, { ...options, signal: controller.signal })
+            .finally(() => clearTimeout(timer));
+    }
+
+    // ==== AI СТИЛИ ====
+    const AI_STYLES = [
+        { name: 'АГРЕССИВНЫЙ', raiseThreshold: 0.55, bluffChance: 0.15, foldToBigBet: 0.3 },
+        { name: 'ТАЙТОВЫЙ', raiseThreshold: 0.65, bluffChance: 0.02, foldToBigBet: 0.9 },
+        { name: 'ЛУЗОВЫЙ', raiseThreshold: 0.55, bluffChance: 0.10, foldToBigBet: 0.2 },
+        { name: 'ОСТОРОЖНЫЙ', raiseThreshold: 0.56, bluffChance: 0.12, foldToBigBet: 0.55 },
+        { name: 'ХИТРЫЙ', raiseThreshold: 0.49, bluffChance: 0.25, foldToBigBet: 0.4 },
+        { name: 'МАТЕМАТИК', raiseThreshold: 0.45, bluffChance: 0.05, foldToBigBet: 0.3 },
+        { name: 'БЕЗУМНЫЙ', raiseThreshold: 0.38, bluffChance: 0.30, foldToBigBet: 0.15 },
+        { name: 'ПРОФЕССИОНАЛ', raiseThreshold: 0.65, bluffChance: 0.12, foldToBigBet: 0.6 }
+    ];
+
+    // ============================================================
+    // ★★★ ПОСТРОЕНИЕ ПРОМПТА — ТОЧНО КАК В TESTS ★★★
+    // ============================================================
+
+    function rankValue(card) {
+        const r = card.slice(0, -1);
+        const map = { 'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10 };
+        return map[r] || parseInt(r) || 0;
+    }
+
+    function classifyPreflopHand(c1, c2) {
+        const r1 = rankValue(c1), r2 = rankValue(c2);
+        const suited = c1.slice(-1) === c2.slice(-1);
+        const high = Math.max(r1, r2), low = Math.min(r1, r2);
+        const gap = high - low;
+        const pair = (high === low);
+
+        if (pair && high >= 13) return { name: "Премиум-пара", strength: 100 };
+        if (high === 14 && low === 13 && suited) return { name: "AKs", strength: 95 };
+        if (pair && high >= 11) return { name: "Высокая пара", strength: 85 };
+        if (high === 14 && low >= 12) return { name: "Сильный бродвей", strength: 85 };
+        if (high === 13 && low === 12 && suited) return { name: "KQs", strength: 80 };
+        if (pair && high >= 9) return { name: "Средняя пара", strength: 70 };
+        if (suited && high >= 12 && low >= 10) return { name: "Одномастный бродвей", strength: 70 };
+        if (high === 14 && suited && low >= 8) return { name: "Axs сильный", strength: 65 };
+        if (pair && high >= 7) return { name: "Маленькая пара", strength: 60 };
+        if (suited && gap <= 1 && high >= 9) return { name: "Одномастный коннектор", strength: 55 };
+        if (high >= 11 && low >= 9) return { name: "Бродвей", strength: 55 };
+        if (pair) return { name: "Низкая пара", strength: 50 };
+        if (suited && gap <= 2) return { name: "Слабый одномастный", strength: 45 };
+        if (high === 14) return { name: "Ax", strength: 40 };
+        if (suited) return { name: "Слабые одномастные", strength: 35 };
+        if (gap <= 3 && high >= 8) return { name: "Слабая связка", strength: 30 };
+        return { name: "Мусор", strength: 10 };
+    }
+
+    function evaluatePostflopHand(myCards, commCards) {
+        const all = myCards.split(' ').concat(commCards.split(' ').filter(c => c.trim()));
+        if (all.length < 5) return { name: '—', strength: 50 };
+
+        const ranks = all.map(c => rankValue(c));
+        const suits = all.map(c => c.slice(-1));
+        const rankCount = {};
+        ranks.forEach(r => rankCount[r] = (rankCount[r] || 0) + 1);
+        const counts = Object.values(rankCount).sort((a, b) => b - a);
+
+        const suitCount = {};
+        suits.forEach(s => suitCount[s] = (suitCount[s] || 0) + 1);
+        const isFlush = Object.values(suitCount).some(c => c >= 5);
+
+        const uniqueRanks = [...new Set(ranks)].sort((a, b) => a - b);
+        let isStraight = false;
+        for (let i = 0; i <= uniqueRanks.length - 5; i++) {
+            if (uniqueRanks[i + 4] - uniqueRanks[i] === 4) { isStraight = true; break; }
+        }
+        if (!isStraight && uniqueRanks.includes(14)) {
+            const low = uniqueRanks.filter(r => r <= 5);
+            if ([2, 3, 4, 5].every(r => low.includes(r))) isStraight = true;
+        }
+
+        if (isFlush && isStraight) return { name: 'Стрит-флеш', strength: 98 };
+        if (counts[0] === 4) return { name: 'Каре', strength: 95 };
+        if (counts[0] === 3 && counts[1] === 2) return { name: 'Фулл-хаус', strength: 90 };
+        if (isFlush) return { name: 'Флеш', strength: 85 };
+        if (isStraight) return { name: 'Стрит', strength: 80 };
+        if (counts[0] === 3) return { name: 'Сет', strength: 70 };
+        if (counts[0] === 2 && counts[1] === 2) return { name: 'Две пары', strength: 55 };
+        if (counts[0] === 2) return { name: 'Пара', strength: 40 };
+        return { name: 'Старшая карта', strength: 15 };
+    }
+
+    function buildPrompt(stage, myCards, commCards, pot, stack, toCall, style, position) {
+        const stageMap = { 'Префлоп': 'ПРЕФЛОП', 'Флоп': 'ФЛОП', 'Тёрн': 'ТЁРН', 'Ривер': 'РИВЕР' };
+        const stageRu = stageMap[stage] || 'ФЛОП';
+
+        const heroCards = myCards.split(' ').join(', ');
+        const boardStr = commCards && commCards.trim() ? commCards : '';
+
+        let handName = '—';
+        let handStrength = 50;
+        let equity = 50;
+
+        if (stage === 'Префлоп') {
+            const [c1, c2] = myCards.split(' ');
+            const cls = classifyPreflopHand(c1, c2);
+            handName = cls.name;
+            handStrength = cls.strength;
+            equity = Math.round(cls.strength * 0.9);
+        } else {
+            const cls = evaluatePostflopHand(myCards, commCards);
+            handName = cls.name;
+            handStrength = cls.strength;
+            equity = Math.round(cls.strength);
+        }
+
+        let history = `Hero (${position || 'BTN'}) OPEN_RAISE, Villain (BB) CALL`;
+        if (stage !== 'Префлоп') {
+            const oppAction = toCall > 0 ? `Опп BET $${Math.round(toCall)}` : 'Опп CHECK';
+            history += `. ${stage}: ${oppAction}`;
+        }
+
+        const villainRange = 'AA,KK,QQ,JJ,TT,99,88,AKs,AQs,AJs,KQs,AKo,AQo';
+
+        if (stage === 'Префлоп') {
+            return `[СТАДИЯ: ПРЕФЛОП]
+
+=== ИСТОРИЯ РАЗДАЧИ ===
+${history}
+
+=== ТВОИ КАРТЫ ===
+${heroCards}
+
+=== АНАЛИЗ СИСТЕМЫ ===
+Рука: ${handName} (сила ${Math.round(handStrength)}/100)
+Диапазон оппонента: ${villainRange}
+
+=== КОНТЕКСТ ===
+Позиция: ${position || 'BTN'}
+Стек: $${Math.round(stack)}, Банк: $${Math.round(pot)}
+Колл: $${Math.round(toCall)}
+
+Ответь СТРОГО:
+АНАЛИЗ: [логика с числами]
+ДЕЙСТВИЕ: [FOLD/CALL/RAISE]
+СУММА: [число]`;
+        }
+
+        const boardCount = commCards.split(' ').filter(c => c.trim()).length;
+        return `[СТАДИЯ: ${stageRu}]
+
+=== ИСТОРИЯ РАЗДАЧИ ===
+${history}
+
+=== ТВОИ КАРТЫ ===
+${heroCards}
+
+=== БОРД (${boardCount} карт) ===
+${boardStr}
+
+=== АНАЛИЗ СИСТЕМЫ ===
+Комбинация: ${handName} (сила ${Math.round(handStrength)}/100)
+Эквити против диапазона: ${equity}%
+Текстура: DRY
+Диапазон оппонента: ${villainRange}
+
+=== ДЕЙСТВИЕ ОППОНЕНТА ===
+${toCall > 0 ? `Опп BET $${Math.round(toCall)}` : 'Опп CHECK'}
+
+=== КОНТЕКСТ ===
+Позиция: ${position || 'BTN'}
+Стек: $${Math.round(stack)}, Банк: $${Math.round(pot)}
+Колл: $${Math.round(toCall)}
+
+Ответь СТРОГО:
+АНАЛИЗ: [логика с числами]
+ДЕЙСТВИЕ: [FOLD/CHECK/CALL/BET/RAISE]
+СУММА: [число]`;
+    }
+
+    // ==== СЕРВЕРНЫЙ ИИ ====
+    async function serverAiDecision(p, toCall, stage) {
+        const myCards = p.cards.map(c => c.toString()).join(' ');
+        const commCards = G.comm.map(c => c.toString()).join(' ') || '';
+
+        const prompt = buildPrompt(
+            stage, myCards, commCards, G.pot, p.stack, toCall, p.style, p.position || 'BTN'
+        );
+
+        // console.log('[PROMPT]', prompt.substring(0, 300) + '...');
+
+        try {
+            const resp = await fetchWithTimeout(`${AI_SERVER_URL}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompt, max_tokens: 255 })
+            }, AI_FETCH_TIMEOUT);
+
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+            console.log('[AI RESPONSE]', data.response);
+            return data.response || '';
+        } catch (e) {
+            console.error('[AI ERROR]', e);
+            return '';
+        }
+    }
+
+    // ==== ОСТАЛЬНОЙ КОД (игра, отрисовка, статистика) ====
+
+    function startGame() {
+        const ai = parseInt(document.getElementById('aiCount').value);
+        if (isNaN(ai) || ai < 1 || ai > 8) { alert('Введите число ИИ от 1 до 8'); return; }
+
+        if (playerActionResolver) {
+            const r = playerActionResolver;
+            playerActionResolver = null;
+            r(null);
+        }
+        G.playing = false;
+        G.currentHandId++;
+        G.lastRaiseSize = BB;
+        disableControls();
+
+        const banner = document.getElementById('showdownBanner');
+        if (banner) banner.classList.remove('visible');
+
+        G.showAllCards = document.getElementById('showAllCards').checked;
+        G.players = [new Player('ТЫ', START, true, null)];
+        for (let i = 0; i < ai; i++) {
+            const style = AI_STYLES[i % AI_STYLES.length];
+            G.players.push(new Player(`ИИ_${i + 1}`, START, false, style));
+        }
+        G.deck = new Deck();
+        G.playing = true;
+        G.handNum = 0; G.dealerPos = 0;
+        G.humanFolded = false; G.showdownMode = false; G.bettingActive = false;
+        G.currentTurnIdx = -1;
+
+        createPlayerSlots();
+        document.getElementById('observerBanner').classList.toggle('visible', G.showAllCards);
+        log(`🎮 Игра началась! Игроков: ${G.players.length}`, 'info');
+        payoutSoundOn = document.getElementById('payoutSound')?.checked ?? true;
+        ensureAudio();
+        playHand();
+    }
+
+    function createPlayerSlots() {
+        const table = document.getElementById('pokerTable');
+        G.playerSlots.forEach(slot => {
+            if (slot.player && slot.player.parentNode) slot.player.parentNode.removeChild(slot.player);
+            if (slot.bet && slot.bet.parentNode) slot.bet.parentNode.removeChild(slot.bet);
+            if (slot.bubble && slot.bubble.parentNode) slot.bubble.parentNode.removeChild(slot.bubble);
+        });
+        G.playerSlots = [];
+        const n = G.players.length;
+        const rx = 42, ry = 40;
+        for (let i = 0; i < n; i++) {
+            const ang = (i / n) * 2 * Math.PI - Math.PI / 2;
+            const x = 50 + rx * Math.cos(ang);
+            const y = 50 + ry * Math.sin(ang);
+            const pl = document.createElement('div');
+            pl.className = 'player';
+            pl.style.left = `${x}%`; pl.style.top = `${y}%`;
+            pl.style.transform = 'translate(-50%, -50%)';
+
+            const nameEl = document.createElement('div'); nameEl.className = 'player-name';
+            const stackEl = document.createElement('div'); stackEl.className = 'player-stack';
+            const cardsEl = document.createElement('div'); cardsEl.className = 'player-cards';
+            const handEl = document.createElement('div'); handEl.className = 'player-hand-name';
+
+            pl.appendChild(nameEl); pl.appendChild(stackEl); pl.appendChild(cardsEl); pl.appendChild(handEl);
+            table.appendChild(pl);
+
+            const betX = 50 + (rx * 0.55) * Math.cos(ang);
+            const betY = 50 + (ry * 0.55) * Math.sin(ang);
+            const bet = document.createElement('div');
+            bet.className = 'player-bet hidden';
+            bet.style.left = `${betX}%`; bet.style.top = `${betY}%`;
+            bet.style.transform = 'translate(-50%, -50%)';
+            table.appendChild(bet);
+
+            const bubX = 50 + (rx * 0.78) * Math.cos(ang);
+            const bubY = 50 + (ry * 0.78) * Math.sin(ang) + 6;
+            const bubble = document.createElement('div');
+            bubble.className = 'action-bubble hidden';
+            bubble.style.left = `${bubX}%`; bubble.style.top = `${bubY}%`;
+            bubble.style.transform = 'translate(-50%, -50%)';
+            table.appendChild(bubble);
+
+            G.playerSlots.push({ player: pl, nameEl, stackEl, cardsEl, handEl, bet, bubble });
+        }
+    }
+
+    function renderCardInto(container, card, hidden, highlight, animate) {
+        if (!container || !card) return;
+        const d = document.createElement('div');
+        d.className = `card ${hidden ? 'back' : card.getSuitClass()} ${highlight ? 'highlight' : ''} ${animate ? 'dealing' : ''}`;
+        if (!hidden) d.textContent = card.toString();
+        container.appendChild(d);
+        return d;
+    }
+
+    // ============================================================
+    // ★★★ PLAYHAND — игра ★★★
+    // ============================================================
+    async function playHand() {
+        if (!G.playing) return;
+        G.handNum++;
+        const handId = G.currentHandId;
+        document.getElementById('handNumber').textContent = `Раздача #${G.handNum}`;
+
+        G.players.forEach(p => p.reset());
+        G.comm = [];
+        G.pot = 0;
+        G.curBet = 0;
+        G.stage = 'Префлоп';
+        G.humanFolded = false;
+        G.showdownMode = false;
+        G.currentTurnIdx = -1;
+        G.lastRaiseSize = BB;
+
+        const active = G.players.filter(p => !p.eliminated && p.stack > 0);
+        if (active.length < 2) {
+            log('🏆 Игра окончена!', 'win');
+            G.playing = false;
+            return;
+        }
+
+        updateStage();
+        updatePot();
+        updateCommunity();
+
+        // Раздача карт
+        G.deck = new Deck();
+        for (let round = 0; round < 2; round++) {
+            for (let p of active) {
+                p.cards.push(G.deck.deal(1)[0]);
+            }
+        }
+
+        // Блайнды
+        G.dealerPos = G.players.indexOf(active[active.length - 1]);
+        const nextActive = (idx) => {
+            let next = idx;
+            do { next = (next + 1) % G.players.length; } while (G.players[next].eliminated || G.players[next].stack <= 0);
+            return next;
+        };
+        G.sbPos = nextActive(G.dealerPos);
+        G.bbPos = nextActive(G.sbPos);
+
+        const sb = G.players[G.sbPos];
+        const bb = G.players[G.bbPos];
+        const sbAmt = Math.min(SB, sb.stack);
+        const bbAmt = Math.min(BB, bb.stack);
+        sb.stack -= sbAmt; sb.currentBet = sbAmt; sb.totalContributed = sbAmt; G.pot += sbAmt;
+        bb.stack -= bbAmt; bb.currentBet = bbAmt; bb.totalContributed = bbAmt; G.pot += bbAmt;
+        G.curBet = BB;
+        G.lastRaiseSize = BB;
+
+        updateAllSlots();
+        updatePot();
+        await sleep(DELAY_STAGE);
+
+        // Игра по улицам
+        for (const stage of ['Префлоп', 'Флоп', 'Тёрн', 'Ривер']) {
+            if (!G.playing || G.currentHandId !== handId) return;
+            G.stage = stage;
+            updateStage();
+
+            // Открываем карты
+            if (stage === 'Флоп') {
+                G.comm.push(...G.deck.deal(3));
+                updateCommunity();
+                await sleep(DELAY_STAGE);
+            } else if (stage === 'Тёрн' || stage === 'Ривер') {
+                G.comm.push(...G.deck.deal(1));
+                updateCommunity();
+                await sleep(DELAY_STAGE);
+            }
+
+            // Ставки
+            const activePlayers = G.players.filter(p => !p.folded && !p.eliminated);
+            if (activePlayers.length < 2) break;
+
+            await bettingRound(handId, stage);
+            if (!G.playing || G.currentHandId !== handId) return;
+
+            const remaining = G.players.filter(p => !p.folded && !p.eliminated);
+            if (remaining.length < 2) break;
+        }
+
+        // Если остался 1 — он выигрывает
+        const remaining = G.players.filter(p => !p.folded && !p.eliminated);
+        if (remaining.length === 1) {
+            const winner = remaining[0];
+            winner.stack += G.pot;
+            winner.winner = true;
+            log(`🏆 ${winner.name} забирает банк $${G.pot}`, 'win');
+            G.pot = 0;
+            updateAllSlots();
+            updatePot();
+            G.stage = 'Вскрытие';
+            updateStage();
+            await sleep(DELAY_SHOWDOWN);
+            G.showdownMode = false;
+            G.players.forEach(p => p.winner = false);
+            await sleep(DELAY_NEXT_HAND);
+            if (G.playing) playHand();
+            return;
+        }
+
+        // Шоудаун
+        if (!G.humanFolded || remaining.length >= 2) {
+            await showdown(handId);
+        }
+
+        if (!G.playing || G.currentHandId !== handId) return;
+
+        G.showdownMode = false;
+        G.players.forEach(p => {
+            p.winner = false;
+            if (p.stack <= 0) p.eliminated = true;
+        });
+        updateAllSlots();
+
+        await sleep(DELAY_NEXT_HAND);
+        if (G.playing) playHand();
+    }
+
+    async function bettingRound(handId, stage) {
+        const activePlayers = G.players.filter(p => !p.folded && !p.eliminated);
+        if (activePlayers.length < 2) return;
+
+        let actors = [...activePlayers];
+        const firstIdx = stage === 'Префлоп' ? G.bbPos : G.dealerPos;
+        let startIdx = G.players.indexOf(activePlayers[0]);
+        for (let p of activePlayers) {
+            if (G.players.indexOf(p) > firstIdx || firstIdx === G.players.indexOf(activePlayers[0])) {
+                startIdx = G.players.indexOf(p);
+                break;
+            }
+        }
+
+        const ordered = [];
+        for (let i = 0; i < G.players.length; i++) {
+            const idx = (startIdx + i) % G.players.length;
+            const p = G.players[idx];
+            if (!p.folded && !p.eliminated) ordered.push(p);
+        }
+
+        let lastRaiser = null;
+        let needAction = new Set(ordered);
+
+        while (needAction.size > 0) {
+            if (!G.playing || G.currentHandId !== handId) return;
+            const actor = ordered.find(p => needAction.has(p));
+            if (!actor) break;
+
+            G.currentTurnIdx = G.players.indexOf(actor);
+            updateAllSlots();
+            await sleep(DELAY_AI_THINK);
+
+            let action = null;
+            if (actor.isHuman) {
+                action = await waitForHumanAction(actor, stage);
+            } else {
+                action = await aiAction(actor, stage);
+            }
+            if (!action) return;
+
+            needAction.delete(actor);
+
+            const { type, amount } = action;
+            const toCall = G.curBet - actor.currentBet;
+
+            if (type === 'fold') {
+                actor.folded = true;
+                actor.lastAction = 'Фолд';
+                log(`${actor.name}: Фолд`);
+            } else if (type === 'check') {
+                if (toCall > 0) { actor.folded = true; log(`${actor.name}: Фолд (чек невозможен)`); }
+                else { actor.lastAction = 'Чек'; log(`${actor.name}: Чек`); }
+            } else if (type === 'call') {
+                const callAmt = Math.min(toCall, actor.stack);
+                actor.stack -= callAmt;
+                actor.currentBet += callAmt;
+                actor.totalContributed += callAmt;
+                G.pot += callAmt;
+                actor.lastAction = `Колл $${callAmt}`;
+                log(`${actor.name}: Колл $${callAmt}`);
+            } else if (type === 'raise') {
+                const raiseTo = Math.min(amount, actor.stack + actor.currentBet);
+                const addAmt = raiseTo - actor.currentBet;
+                actor.stack -= addAmt;
+                actor.totalContributed += addAmt;
+                G.pot += addAmt;
+                G.curBet = raiseTo;
+                actor.currentBet = raiseTo;
+                G.lastRaiseSize = raiseTo - G.curBet + addAmt;
+                actor.lastAction = `Рейз до $${raiseTo}`;
+                log(`${actor.name}: Рейз до $${raiseTo}`);
+                // Все остальные должны снова действовать
+                needAction = new Set(ordered.filter(p => p !== actor && !p.folded && p.currentBet < G.curBet));
+            } else if (type === 'bet') {
+                const betAmt = Math.min(amount, actor.stack);
+                actor.stack -= betAmt;
+                actor.currentBet += betAmt;
+                actor.totalContributed += betAmt;
+                G.pot += betAmt;
+                G.curBet = betAmt;
+                G.lastRaiseSize = betAmt;
+                actor.lastAction = `Бет $${betAmt}`;
+                log(`${actor.name}: Бет $${betAmt}`);
+                needAction = new Set(ordered.filter(p => p !== actor && !p.folded && p.currentBet < G.curBet));
+            }
+
+            updateAllSlots();
+            updatePot();
+            await sleep(DELAY_AI_ACTION);
+
+            // Проверка: все уравняли?
+            const stillActive = G.players.filter(p => !p.folded && !p.eliminated);
+            if (stillActive.length < 2) return;
+            if (stillActive.every(p => p.currentBet === G.curBet || p.stack === 0)) {
+                if (needAction.size === 0) break;
+            }
+        }
+
+        // Сброс ставок
+        G.players.forEach(p => p.currentBet = 0);
+        G.curBet = 0;
+        G.lastRaiseSize = BB;
+        updateAllSlots();
+        updatePot();
+    }
+
+    async function aiAction(actor, stage) {
+        const toCall = Math.max(0, G.curBet - actor.currentBet);
+
+        // 1. Пробуем сервер
+        try {
+            const response = await serverAiDecision(actor, toCall, stage);
+            if (response) {
+                const parsed = parseAIResponse(response, toCall, actor.stack, G.pot);
+                if (parsed) {
+                    actor.lastServerAction = parsed;
+                    log(`🤖 ${actor.name}: ${response.substring(0, 100)}`, 'ai');
+                    return parsed;
+                }
+            }
+        } catch (e) {
+            console.error('[AI] ошибка:', e);
+        }
+
+        // 2. Fallback — простая эвристика
+        const strength = HandEvaluator.effective(actor.cards, G.comm, stage);
+        log(`⚠️ ${actor.name}: fallback (сервер недоступен)`, 'error');
+
+        if (toCall === 0) {
+            if (strength > 0.6) return { type: 'bet', amount: Math.round(G.pot * 0.66) };
+            return { type: 'check', amount: 0 };
+        }
+        if (strength > 0.7) return { type: 'raise', amount: Math.min(G.curBet * 2.5, actor.stack + actor.currentBet) };
+        if (strength > 0.4) return { type: 'call', amount: toCall };
+        return { type: 'fold', amount: 0 };
+    }
+
+    function parseAIResponse(response, toCall, stack, pot) {
+        let action = null;
+        let amount = 0;
+
+        for (let line of response.split('\n')) {
+            line = line.trim().toUpperCase();
+            if (line.startsWith('ДЕЙСТВИЕ:') || line.startsWith('ACTION:')) {
+                const a = line.split(':')[1].trim().split(/[\s\/]/)[0];
+                if (['FOLD', 'CHECK', 'CALL', 'BET', 'RAISE'].includes(a)) action = a;
+            }
+            if (line.startsWith('СУММА:') || line.startsWith('AMOUNT:')) {
+                const m = line.match(/\d+/);
+                if (m) amount = parseInt(m[0]);
+            }
+        }
+
+        if (!action) return null;
+
+        if (action === 'FOLD') return { type: 'fold', amount: 0 };
+        if (action === 'CHECK') return toCall > 0 ? { type: 'fold', amount: 0 } : { type: 'check', amount: 0 };
+        if (action === 'CALL') return { type: 'call', amount: toCall };
+        if (action === 'BET') return { type: 'bet', amount: Math.min(Math.max(amount, BB), stack) };
+        if (action === 'RAISE') return { type: 'raise', amount: Math.min(Math.max(amount, G.curBet + BB), stack + G.curBet) };
+
+        return null;
+    }
+
+    function waitForHumanAction(actor, stage) {
+        return new Promise(resolve => {
+            playerActionResolver = resolve;
+
+            const toCall = Math.max(0, G.curBet - actor.currentBet);
+            const minRaise = G.curBet + G.lastRaiseSize;
+            const maxRaise = actor.stack + actor.currentBet;
+
+            const foldBtn = document.getElementById('foldBtn');
+            const checkBtn = document.getElementById('checkBtn');
+            const callBtn = document.getElementById('callBtn');
+            const raiseBtn = document.getElementById('raiseBtn');
+            const slider = document.getElementById('raiseSlider');
+            const raiseValue = document.getElementById('raiseValue');
+            const raiseMinLabel = document.getElementById('raiseMinLabel');
+            const raiseMaxLabel = document.getElementById('raiseMaxLabel');
+
+            foldBtn.disabled = false;
+            checkBtn.disabled = toCall > 0;
+            callBtn.disabled = toCall === 0;
+            callBtn.textContent = toCall > 0 ? `✅ Колл $${toCall}` : '✅ Колл';
+
+            if (maxRaise >= minRaise) {
+                raiseBtn.disabled = false;
+                slider.disabled = false;
+                slider.min = minRaise;
+                slider.max = maxRaise;
+                slider.value = Math.min(minRaise, maxRaise);
+                slider.step = BB;
+                raiseValue.textContent = `$${slider.value}`;
+                raiseMinLabel.textContent = `min $${minRaise}`;
+                raiseMaxLabel.textContent = `max $${maxRaise}`;
+                slider.oninput = () => { raiseValue.textContent = `$${slider.value}`; };
+            } else {
+                raiseBtn.disabled = true;
+                slider.disabled = true;
+            }
+
+            const human = G.players.find(p => p.isHuman);
+            if (human) {
+                const handName = HandEvaluator.catName(HandEvaluator.evaluate([...human.cards, ...G.comm]).score);
+                const strength = HandEvaluator.effective(human.cards, G.comm, stage);
+                document.getElementById('handStrength').textContent = handName;
+                document.getElementById('handDescription').textContent = `${Math.round(strength * 100)}/100 — ${HandEvaluator.strDesc(strength)}`;
+            }
+        });
+    }
+
+    function playerAction(type) {
+        if (!playerActionResolver) return;
+        const human = G.players.find(p => p.isHuman);
+        if (!human) return;
+
+        const toCall = Math.max(0, G.curBet - human.currentBet);
+        let action = null;
+
+        if (type === 'fold') action = { type: 'fold', amount: 0 };
+        else if (type === 'check') action = { type: 'check', amount: 0 };
+        else if (type === 'call') action = { type: 'call', amount: toCall };
+        else if (type === 'raise') {
+            const slider = document.getElementById('raiseSlider');
+            action = { type: G.curBet > 0 ? 'raise' : 'bet', amount: parseInt(slider.value) };
+        }
+
+        if (!action) return;
+        const resolver = playerActionResolver;
+        playerActionResolver = null;
+        disableControls();
+        resolver(action);
+    }
+
+    function disableControls() {
+        ['foldBtn', 'checkBtn', 'callBtn', 'raiseBtn'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = true;
+        });
+        const slider = document.getElementById('raiseSlider');
+        if (slider) slider.disabled = true;
+    }
+
+    function updateStage() {
+        const el = document.getElementById('stageDisplay');
+        if (el) el.textContent = G.stage;
+    }
+
+    function updatePot() {
+        const el = document.getElementById('potDisplay');
+        if (el) {
+            const shown = displayPotOverride !== null ? displayPotOverride : G.pot;
+            el.textContent = `Банк: ${fmtMoney(shown)}`;
+        }
+    }
+
+    function updateCommunity(highlightIds) {
+        const el = document.getElementById('communityCards');
+        if (!el) return;
+        el.innerHTML = '';
+        G.comm.forEach(c => {
+            const hl = highlightIds && highlightIds.has(c.id);
+            renderCardInto(el, c, false, hl);
+        });
+    }
+
+    function updateAllSlots() {
+        G.players.forEach((p, i) => updatePlayerSlot(i));
+    }
+
+    function updatePlayerSlot(i) {
+        const p = G.players[i];
+        const slot = G.playerSlots[i];
+        if (!p || !slot) return;
+
+        let classes = 'player';
+        if (p.isHuman) classes += ' human';
+        if (p.folded) classes += ' folded';
+        if (p.eliminated) classes += ' eliminated';
+        if (i === G.currentTurnIdx && !p.folded && !p.eliminated) classes += ' active-turn';
+        if (p.winner) classes += ' winner';
+        slot.player.className = classes;
+
+        let nameHtml = p.isHuman ? '👤 ТЫ' : `🤖 ${p.name}`;
+        if (i === G.dealerPos) nameHtml += ' <span class="badge dealer">D</span>';
+        if (i === G.sbPos) nameHtml += ' <span class="badge sb">SB</span>';
+        if (i === G.bbPos) nameHtml += ' <span class="badge bb">BB</span>';
+
+        slot.nameEl.innerHTML = nameHtml;
+        const shownStack = displayStackOverrides.has(p) ? displayStackOverrides.get(p) : p.stack;
+        slot.stackEl.textContent = fmtMoney(shownStack);
+
+        const showCards = p.isHuman || G.showAllCards || G.humanFolded || p.winner || !G.playing || p.eliminated || G.showdownMode;
+        const highlightCards = (p.winner && G.showdownMode) ? (p.bestCards || []) : [];
+        const highlightIds = new Set(highlightCards.map(c => c.id));
+
+        slot.cardsEl.innerHTML = '';
+        if (p.cards.length > 0) {
+            p.cards.forEach(c => {
+                const hl = highlightIds.has(c.id);
+                renderCardInto(slot.cardsEl, c, !showCards, hl);
+            });
+        }
+
+        if (p.handName && (p.winner || G.showdownMode)) {
+            slot.handEl.textContent = (p.winner ? '🏆 ' : '') + p.handName;
+            slot.handEl.classList.add('visible');
+        } else {
+            slot.handEl.classList.remove('visible');
+        }
+
+        if (p.currentBet > 0 && !p.folded && !p.eliminated) {
+            slot.bet.textContent = `💰 $${p.currentBet}`;
+            slot.bet.classList.remove('hidden');
+        } else {
+            slot.bet.classList.add('hidden');
+        }
+    }
+
+    function showdown(handId) {
+        return new Promise(resolve => {
+            log(`🔓 ВСКРЫТИЕ`, 'info');
+            const active = G.players.filter(p => !p.folded && !p.eliminated);
+            if (active.length < 2) { resolve(); return; }
+
+            active.forEach(p => {
+                const r = HandEvaluator.evaluate([...p.cards, ...G.comm], p.cards);
+                p.handName = HandEvaluator.catName(r.score);
+                p.bestCards = r.cards;
+                log(`🃏 ${p.name}: ${p.cards.map(c => c.toString()).join(' ')} → ${p.handName}`, 'info');
+            });
+
+            let best = null;
+            let winners = [];
+            active.forEach(p => {
+                const score = HandEvaluator.evaluate([...p.cards, ...G.comm]).score;
+                if (best === null || HandEvaluator.cmp(score, best) > 0) {
+                    best = score;
+                    winners = [p];
+                } else if (HandEvaluator.cmp(score, best) === 0) {
+                    winners.push(p);
+                }
+            });
+
+            const share = Math.floor(G.pot / winners.length);
+            winners.forEach(w => {
+                w.stack += share;
+                w.winner = true;
+                log(`🏆 ${w.name} выигрывает $${share}`, 'win');
+            });
+
+            G.pot = 0;
+            G.stage = 'Вскрытие';
+            G.showdownMode = true;
+            updateStage();
+            updateAllSlots();
+            updatePot();
+
+            setTimeout(() => {
+                G.showdownMode = false;
+                G.players.forEach(p => { p.winner = false; p.handName = ''; });
+                updateAllSlots();
+                resolve();
+            }, DELAY_SHOWDOWN);
+        });
+    }
+
+    // ==== СТАРТ ====
+    document.getElementById('aiCount')?.addEventListener('change', () => { });
+    console.log('✅ Игра загружена. buildPrompt готов.');
+</script>
+</body>
+
+</html>

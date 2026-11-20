@@ -1,4 +1,20 @@
-# Запуск скрипта https://poker.t2020.ru
+# Example
+https://poker.t2020.ru/deep_poker
+https://poker.t2020.ru
+# Проверить распределение действий
+python -c "import json; from collections import Counter; ds=json.load(open('train_2/dataset_2000_v2.json',encoding='utf-8')); actions=Counter(); [actions.update([line.split(':')[1].strip()]) for x in ds for line in x['completion'].split('\n') if line.startswith('ДЕЙСТВИЕ:')]; print(actions)"
+# train_2 обучение deep_ от deepseek
+python train_2/deep_dataset.py   
+python train_2/check_dataset.py
+python train_2/deep_train_all_v4.py
+python train_2/deep_server.py
+# train_2 обучение (с новым датасетом)
+python dataset_unified.py          # генерация
+python test_unified.py             # проверка
+python train_sll_v4.py      # обучение (с новым датасетом)
+https://chat.qwen.ai/s/1dd08f8f-351a-48c9-a993-8be2fef5121c?fev=0.3.42
+
+# Запуск скрипта https://poker.t2020.ru http://poker.t2020.ru/ollama.html
 python poker_server_v3_Quen_async.py
 visualization_brauser-104-114.html
 
