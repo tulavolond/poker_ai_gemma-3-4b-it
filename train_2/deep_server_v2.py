@@ -4,7 +4,7 @@ poker_server_v4.py - Покерный сервер с LoRA + постобраб�
 
 Запуск: python poker_server_v4.py
 """
-import os
+import os, traceback
 import re
 import json
 import time
@@ -25,7 +25,7 @@ load_dotenv()
 # ============================================================
 BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 LORA_PATH = "./train_2/dataset_2000_v2"
-LORA_ONLINE_PATH = "./train_2/lora_online_learning"
+LORA_ONLINE_PATH = "./train_2/lora_online_learning_qwen"
 
 MEMORY_FILE = "./train_2/poker_memory.json"
 BUFFER_FILE = "./train_2/training_buffer.json"
@@ -37,7 +37,7 @@ HOST = "0.0.0.0"
 MAX_MESSAGES = 40
 MEMORY_LIMIT = 100
 MAX_SEQ_LEN = 788   # ← как в обучении
-
+SELFTEST      =  True
 # ============================================================
 # ЗАГРУЗКА МОДЕЛИ
 # ============================================================
@@ -54,7 +54,7 @@ if tokenizer.pad_token is None:
 
 model = AutoModelForCausalLM.from_pretrained(
     BASE_MODEL_ID,
-    torch_dtype=torch.float16,
+    dtype=torch.float16,
     device_map="auto",
     trust_remote_code=True,
     low_cpu_mem_usage=True,
@@ -552,6 +552,46 @@ class ModelHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         if 'OPTIONS' not in str(args[0]):
             print(f"🌐 {args[0]}")
+def vram_info():
+    if not torch.cuda.is_available():
+        return None
+    return {"alloc": round(torch.cuda.memory_allocated() / 1024**3, 2),
+            "reserved": round(torch.cuda.memory_reserved() / 1024**3, 2)}
+
+
+def selftest():
+    print("\n" + "=" * 66); print("  САМОТЕСТ"); print("=" * 66)
+    try:
+        t0 = time.time()
+        prompt = """СТАДИЯ: ТЁРН (TURN)
+ТВОЕ ИМЯ: Олег
+ТВОИ КАРТЫ: 10♥ 8♠
+БОРД: 10♠ 8♥ 8♦ 6♦
+БАНК: $290, СТЕК: $910
+СТАВКА BET: $0
+МИН. РЕЙЗ ДО: $20
+МАКС. СТАВКА: $910
+ПОЗИЦИЯ: MP
+ИГРОКОВ В РАЗДАЧЕ: 3
+ДЕЙСТВИЯ НА УЛИЦЕ: Алиса чек
+Если СТАВКА BET: $0 > 0, то в ответе ДЕЙСТВИЕ: [FOLD/CHECK/CALL/RAISE], [CHECK] -НЕВОЗМОЖЕН! ТОЛЬКО [FOLD/CALL/RAISE] учитывай это ВАЖНО!
+ВАЖНО! Ничего не добавляй! Отвечай СТРОГО так:
+АНАЛИЗ: [короткое объяснение]
+ДЕЙСТВИЕ: [FOLD/CHECK/CALL/RAISE]
+СУММА: [число — итоговая ставка при RAISE, иначе 0]
+"""
+        txt = run_inference(prompt_text=prompt)
+        print("-"*80)
+        print("ОТВЕТ МОДЕЛИ")
+        print("="*80)
+        print(txt)
+        print("="*80)
+        print(f"⏱ {time.time()-t0:.1f}s → | VRAM {vram_info()}")
+        print("✅ Модель отвечает" if txt else "❌ Пустой ответ")
+    except Exception as e:
+        traceback.print_exc()
+        print(f"❌ Самотест упал: {e}")
+    print("=" * 66 + "\n")
 
 
 # ============================================================
@@ -566,6 +606,9 @@ print("\n📂 Загрузка сохранённых данных...")
 load_all_data()
 
 server = ThreadedHTTPServer((HOST, PORT), ModelHandler)
+
+if SELFTEST:
+    selftest()
 
 print()
 print("=" * 60)

@@ -504,5 +504,71 @@
   "action_taken": "CHECK",
   "outcome": "WIN",
   "lesson": "Выиграл $120 с комбинацией Две пары (десяток и двоек). Линия CALL → CHECK → CHECK → CHECK оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "Q♥ K♥",
+  "board": "3♥ 3♠ 8♦ 8♠ 7♥",
+  "pot": 190,
+  "to_call": 0,
+  "stack": 920,
+  "action_taken": "RAISE 40",
+  "outcome": "WIN",
+  "lesson": "Выиграл $270 с комбинацией Две пары (восьмёрок и троек). Линия RAISE 40 → CHECK → CALL → RAISE 20 → RAISE 40 оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "Q♥ 7♦",
+  "board": "8♣ Q♦ 4♦ 6♣ 4♣",
+  "pot": 1040,
+  "to_call": 0,
+  "stack": 670,
+  "action_taken": "CHECK",
+  "outcome": "WIN",
+  "lesson": "Выиграл $1040 с комбинацией Две пары (дам и четвёрок). Линия CALL → CALL → RAISE 20 → RAISE 60 → RAISE 140 → CALL → CHECK оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "7♣ A♠",
+  "board": "4♣ 7♥ 10♦ 7♠ 5♥",
+  "pot": 100,
+  "to_call": 20,
+  "stack": 700,
+  "action_taken": "RAISE 120",
+  "outcome": "WIN",
+  "lesson": "Выиграл $320 с комбинацией Тройка семёрок. Линия CALL → RAISE 20 → CHECK → CHECK → RAISE 120 оправдалась."
+ },
+ {
+  "stage": "flop",
+  "my_cards": "5♠ Q♥",
+  "board": "8♥ 2♥ 4♣",
+  "pot": 1560,
+  "to_call": 900,
+  "stack": 900,
+  "action_taken": "CALL",
+  "outcome": "LOSS",
+  "lesson": "Проиграл $1000: Старшая туз оказалась слабее. Линия CALL → CALL → CALL → CALL → CALL была слишком широкой против агрессии."
+ },
+ {
+  "stage": "river",
+  "my_cards": "3♠ 8♦",
+  "board": "3♦ K♠ 4♥ 2♦ A♥",
+  "pot": 340,
+  "to_call": 220,
+  "stack": 800,
+  "action_taken": "RAISE 440",
+  "outcome": "LOSS",
+  "lesson": "Проиграл $500: Пара троек оказалась слабее. Линия CALL → RAISE 40 → CHECK → RAISE 440 была слишком широкой против агрессии."
+ },
+ {
+  "stage": "river",
+  "my_cards": "8♣ 8♥",
+  "board": "4♠ 4♥ Q♠ 2♥ 6♣",
+  "pot": 400,
+  "to_call": 0,
+  "stack": 900,
+  "action_taken": "RAISE 30",
+  "outcome": "WIN",
+  "lesson": "Выиграл $520 с комбинацией Две пары (восьмёрок и четвёрок). Линия RAISE 40 → RAISE 20 → RAISE 40 → RAISE 30 оправдалась."
  }
 ]

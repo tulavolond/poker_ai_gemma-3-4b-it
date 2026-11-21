@@ -3112,51 +3112,157 @@
 
 
         // ==== ПОСТРОЕНИЕ ПРОМПТА (как в dataset_v2.py) ====
-        function buildPrompt(stage, myCards, commCards, pot, stack, toCall, style, position) {
-            // 1. Стадия — русская, как в обучении
-            const stageMap = {
-                'Префлоп': 'ПРЕФЛОП',
-                'Флоп': 'ФЛОП',
-                'Тёрн': 'ТЁРН',
-                'Ривер': 'РИВЕР',
-            };
-            const stageRu = stageMap[stage] || 'ФЛОП';
+//         function buildPrompt(stage, myCards, commCards, pot, stack, toCall, style, position) {
+//             // 1. Стадия — русская, как в обучении
+//             const stageMap = {
+//                 'Префлоп': 'ПРЕФЛОП',
+//                 'Флоп': 'ФЛОП',
+//                 'Тёрн': 'ТЁРН',
+//                 'Ривер': 'РИВЕР',
+//             };
+//             const stageRu = stageMap[stage] || 'ФЛОП';
 
-            // 2. Карты — через запятую, как в обучении
-            const heroCards = myCards; //.split(' ').join(', ');
-            const boardStr = commCards && commCards.trim() ? commCards : '—';
+//             // 2. Карты — через запятую, как в обучении
+//             const heroCards = myCards; //.split(' ').join(', ');
+//             const boardStr = commCards && commCards.trim() ? commCards : '—';
 
-            // 3. История (если есть в G, иначе простая)
-            const history = G.handHistory || `Hero (${position || 'BTN'}) OPEN_RAISE, Villain (BB) CALL`;
+//             // 3. История (если есть в G, иначе простая)
+//             const history = G.handHistory || `Hero (${position || 'BTN'}) OPEN_RAISE, Villain (BB) CALL`;
 
-            // 4. Сила руки (упрощённая, для префлопа)
-            let handName = '—';
-            let handStrength = 50;
-            if (stage === 'Префлоп') {
-                const [c1, c2] = myCards.split(' ');
-                const r1 = rankValue(c1), r2 = rankValue(c2);
-                const suited = c1.slice(-1) === c2.slice(-1);
-                if (r1 === r2) {
-                    handName = `Пара ${c1.slice(0, -1)}`;
-                    handStrength = Math.min(100, 50 + (r1 - 2) * 4);
-                } else if (suited) {
-                    handName = 'Одномастные';
-                    handStrength = Math.min(100, 40 + (r1 + r2) / 2 * 2);
-                } else {
-                    handName = 'Разномастные';
-                    handStrength = Math.min(100, 35 + (r1 + r2) / 2 * 2);
-                }
-            } else {
-                handName = '—';
-                handStrength = 50;
-            }
+//             // 4. Сила руки (упрощённая, для префлопа)
+//             let handName = '—';
+//             let handStrength = 50;
+//             if (stage === 'Префлоп') {
+//                 const [c1, c2] = myCards.split(' ');
+//                 const r1 = rankValue(c1), r2 = rankValue(c2);
+//                 const suited = c1.slice(-1) === c2.slice(-1);
+//                 if (r1 === r2) {
+//                     handName = `Пара ${c1.slice(0, -1)}`;
+//                     handStrength = Math.min(100, 50 + (r1 - 2) * 4);
+//                 } else if (suited) {
+//                     handName = 'Одномастные';
+//                     handStrength = Math.min(100, 40 + (r1 + r2) / 2 * 2);
+//                 } else {
+//                     handName = 'Разномастные';
+//                     handStrength = Math.min(100, 35 + (r1 + r2) / 2 * 2);
+//                 }
+//             } else {
+//                 handName = '—';
+//                 handStrength = 50;
+//             }
 
-            // 5. Диапазон оппонента (упрощённый, для префлопа)
-            const villainRange = 'AA,KK,QQ,JJ,TT,99,88,AKs,AQs,AJs,KQs,AKo,AQo';
+//             // 5. Диапазон оппонента (упрощённый, для префлопа)
+//             const villainRange = 'AA,KK,QQ,JJ,TT,99,88,AKs,AQs,AJs,KQs,AKo,AQo';
 
-            // 6. Собираем prompt — ТОЧНО как в dataset_v2.py
-            if (stage === 'Префлоп') {
-                return `[СТАДИЯ: ПРЕФЛОП]
+//             // 6. Собираем prompt — ТОЧНО как в dataset_v2.py
+//             if (stage === 'Префлоп') {
+//                 return `[СТАДИЯ: ПРЕФЛОП]
+
+// === ИСТОРИЯ РАЗДАЧИ ===
+// ${history}
+
+// === ТВОИ КАРТЫ ===
+// ${heroCards}
+
+// === АНАЛИЗ СИСТЕМЫ ===
+// Рука: ${handName} (сила ${Math.round(handStrength)}/100)
+// Диапазон оппонента: ${villainRange}
+
+// === КОНТЕКСТ ===
+// Позиция: ${position || 'BTN'}
+// Стек: $${Math.round(stack)}, Банк: $${Math.round(pot)}
+// Колл: $${Math.round(toCall)}
+
+// Ответь СТРОГО:
+// АНАЛИЗ: [логика с числами]
+// ДЕЙСТВИЕ: [FOLD/CALL/RAISE]
+// СУММА: [число]`;
+//             }
+
+//             // Флоп / Тёрн / Ривер
+//             const textureMap = { 'Флоп': 'DRY', 'Тёрн': 'DRY', 'Ривер': 'DRY' };
+//             return `[СТАДИЯ: ${stageRu}]
+
+// === ИСТОРИЯ РАЗДАЧИ ===
+// ${history}
+
+// === ТВОИ КАРТЫ ===
+// ${heroCards}
+
+// === БОРД (${commCards.split(' ').filter(c => c).length} карт) ===
+// ${boardStr}
+
+// === АНАЛИЗ СИСТЕМЫ ===
+// Комбинация: ${handName} (сила ${Math.round(handStrength)}/100)
+// Эквити против диапазона: 50%
+// Текстура: ${textureMap[stage] || 'DRY'}
+// Диапазон оппонента: ${villainRange}
+
+// === ДЕЙСТВИЕ ОППОНЕНТА ===
+// ${toCall > 0 ? `Опп BET $${toCall}` : 'Опп CHECK'}
+
+// === КОНТЕКСТ ===
+// Позиция: ${position || 'BTN'}
+// Стек: $${Math.round(stack)}, Банк: $${Math.round(pot)}
+// Колл: $${Math.round(toCall)}
+
+// Ответь СТРОГО:
+// АНАЛИЗ: [логика с числами]
+// ДЕЙСТВИЕ: [FOLD/CHECK/CALL/BET/RAISE]
+// СУММА: [число]`;
+//         }
+// ============================================================
+// 5. ДИАПАЗОН ОППОНЕНТА — ЗАВИСИТ ОТ ПОЗИЦИИ
+// ============================================================
+function getVillainRange(heroPosition, stage) {
+    const ranges = {
+        'UTG': 'AA,KK,QQ,JJ,TT,AKs,AQs,AKo,AQo',
+        'MP':  'AA,KK,QQ,JJ,TT,99,AKs,AQs,AJs,KQs,AKo,AQo',
+        'CO':  'AA,KK,QQ,JJ,TT,99,88,AKs,AQs,AJs,ATs,KQs,KJs,QJs,AKo,AQo,AJo',
+        'BTN': 'AA,KK,QQ,JJ,TT,99,88,77,AKs,AQs,AJs,ATs,A9s,KQs,KJs,KTs,QJs,QTs,JTs,AKo,AQo,AJo,ATo,KQo',
+        'SB':  'AA,KK,QQ,JJ,TT,99,88,AKs,AQs,AJs,ATs,KQs,KJs,QJs,AKo,AQo,AJo',
+    };
+    return ranges[heroPosition] || 'AA,KK,QQ,JJ,TT,99,88,AKs,AQs,AJs,KQs,AKo,AQo';
+}
+
+// ============================================================
+// buildPrompt — с getVillainRange
+// ============================================================
+function buildPrompt(stage, myCards, commCards, pot, stack, toCall, style, position) {
+    const stageMap = { 'Префлоп': 'ПРЕФЛОП', 'Флоп': 'ФЛОП', 'Тёрн': 'ТЁРН', 'Ривер': 'РИВЕР' };
+    const stageRu = stageMap[stage] || 'ФЛОП';
+
+    const heroCards = myCards.split(' ').join(', ');
+    const boardStr = commCards && commCards.trim() ? commCards : '';
+
+    let handName = '—';
+    let handStrength = 50;
+    let equity = 50;
+
+    if (stage === 'Префлоп') {
+        const [c1, c2] = myCards.split(' ');
+        const cls = classifyPreflopHand(c1, c2);
+        handName = cls.name;
+        handStrength = cls.strength;
+        equity = Math.round(cls.strength * 0.9);
+    } else {
+        const cls = evaluatePostflopHand(myCards, commCards);
+        handName = cls.name;
+        handStrength = cls.strength;
+        equity = Math.round(cls.strength);
+    }
+
+    let history = `Hero (${position || 'BTN'}) OPEN_RAISE, Villain (BB) CALL`;
+    if (stage !== 'Префлоп') {
+        const oppAction = toCall > 0 ? `Опп BET $${Math.round(toCall)}` : 'Опп CHECK';
+        history += `. ${stage}: ${oppAction}`;
+    }
+
+    // ★★★ ДИАПАЗОН ЗАВИСИТ ОТ ПОЗИЦИИ ★★★
+    const villainRange = getVillainRange(position, stage);
+
+    if (stage === 'Префлоп') {
+        return `[СТАДИЯ: ПРЕФЛОП]
 
 === ИСТОРИЯ РАЗДАЧИ ===
 ${history}
@@ -3177,11 +3283,10 @@ ${heroCards}
 АНАЛИЗ: [логика с числами]
 ДЕЙСТВИЕ: [FOLD/CALL/RAISE]
 СУММА: [число]`;
-            }
+    }
 
-            // Флоп / Тёрн / Ривер
-            const textureMap = { 'Флоп': 'DRY', 'Тёрн': 'DRY', 'Ривер': 'DRY' };
-            return `[СТАДИЯ: ${stageRu}]
+    const boardCount = commCards.split(' ').filter(c => c.trim()).length;
+    return `[СТАДИЯ: ${stageRu}]
 
 === ИСТОРИЯ РАЗДАЧИ ===
 ${history}
@@ -3189,17 +3294,17 @@ ${history}
 === ТВОИ КАРТЫ ===
 ${heroCards}
 
-=== БОРД (${commCards.split(' ').filter(c => c).length} карт) ===
+=== БОРД (${boardCount} карт) ===
 ${boardStr}
 
 === АНАЛИЗ СИСТЕМЫ ===
 Комбинация: ${handName} (сила ${Math.round(handStrength)}/100)
-Эквити против диапазона: 50%
-Текстура: ${textureMap[stage] || 'DRY'}
+Эквити против диапазона: ${equity}%
+Текстура: DRY
 Диапазон оппонента: ${villainRange}
 
 === ДЕЙСТВИЕ ОППОНЕНТА ===
-${toCall > 0 ? `Опп BET $${toCall}` : 'Опп CHECK'}
+${toCall > 0 ? `Опп BET $${Math.round(toCall)}` : 'Опп CHECK'}
 
 === КОНТЕКСТ ===
 Позиция: ${position || 'BTN'}
@@ -3210,8 +3315,7 @@ ${toCall > 0 ? `Опп BET $${toCall}` : 'Опп CHECK'}
 АНАЛИЗ: [логика с числами]
 ДЕЙСТВИЕ: [FOLD/CHECK/CALL/BET/RAISE]
 СУММА: [число]`;
-        }
-
+}
         // Хелпер: ранг → число
         function rankValue(card) {
             const r = card.slice(0, -1);

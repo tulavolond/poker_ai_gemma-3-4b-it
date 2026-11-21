@@ -25,7 +25,7 @@ load_dotenv()
 # ============================================================
 BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 LORA_PATH = "./train_2/dataset_2000_v2"
-LORA_ONLINE_PATH = "./train_2/lora_online_learning"
+LORA_ONLINE_PATH = "./train_2/lora_online_learning_qwen"
 
 MEMORY_FILE = "./train_2/poker_memory.json"
 BUFFER_FILE = "./train_2/training_buffer.json"

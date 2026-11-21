@@ -17,8 +17,8 @@ SUITS = ['♠', '♥', '♦', '♣']
 RANK_NAMES = {11: 'J', 12: 'Q', 13: 'K', 14: 'A'}
 
 # Собираем rank_map: сначала числа от 2 до 10, затем картинки
-# rank_map = {str(i): i for i in range(2, 11)}  # '2': 2, ..., '10': 10
-# rank_map.update({v: k for k, v in RANK_NAMES.items()})
+rank_map = {str(i): i for i in range(2, 11)}  # '2': 2, ..., '10': 10
+rank_map.update({v: k for k, v in RANK_NAMES.items()})
 
 class Card:
     def __init__(self, rank, suit):

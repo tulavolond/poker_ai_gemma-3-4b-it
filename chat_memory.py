@@ -5,11 +5,14 @@ import os
 # MODEL_NAME = "qwen2.5:3b"
 # MODEL_NAME = "gemma4:31b-cloud"
 # MODEL_NAME = "gemma3:4b"
+MODEL_NAME = "gemma-poker-epoch6:26M" # windows ollama
 # MODEL_NAME = "nemotron-3-super:cloud"
 # MODEL_NAME = "gpt-oss:120b-cloud"
-MODEL_NAME = "qwen-poker:latest"
+# MODEL_NAME = "qwen-poker:latest"
+# MODEL_NAME = "gemma-poker-epoch6:latest"
 # MODEL_NAME = "blissful_ishizaka_626/gemma4-cloud:latest"
-OLLAMA_BASE_URL = "http://192.168.1.100:11434"
+OLLAMA_BASE_URL = "http://192.168.1.103:11434"
+# OLLAMA_BASE_URL = "http://192.168.1.100:11434"
 HISTORY_FILE = "chat_memory.json"
 
 # Сколько последних сообщений хранить (user + assistant считаются вместе)

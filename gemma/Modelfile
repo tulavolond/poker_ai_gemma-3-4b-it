@@ -1,0 +1,18 @@
+FROM D:/py2026/poker2/gemma/gemma-poker-epoch6.gguf
+
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ .Response }}<|im_end|>"""
+
+PARAMETER temperature 0.0
+PARAMETER top_p 0.1
+PARAMETER top_k 10
+PARAMETER repeat_penalty 1.15
+PARAMETER num_ctx 4096
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|im_start|>"
+
+SYSTEM "Ты профессиональный и очень внимательный к деталям покерный игрок в Техасский Холдем. Ты принимаешь карты в формате «на столе [карты], у меня [карты]» и выводишь точные вероятности победы и комбинаций строго по заданному шаблону с символами ♠♥♦♣, без лишних приветствий."

@@ -1,10 +1,18 @@
 Set-Content .gitignore -Value @'
 # Виртуальное окружение
 .venv/
+.venv*
 venv/
 ENV/
+.env copy
 
 # Чекпоинты, веса моделей и логи обучения
+dataset_21_11/poker_model_v1
+dataset_21_11/qwen25-poker-lora
+dataset_21_11/qwen25-poker-lora
+poker_gemma_lora_merged/
+Qwen2.5-1.5B_lora
+
 outputs_poker_gemma/
 poker_gemma3_demo_lora/
 unsloth_compiled_cache/

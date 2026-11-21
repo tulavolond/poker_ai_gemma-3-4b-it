@@ -3,7 +3,7 @@ deep_server_v3.py — покерный нейро-сервер (Qwen2.5 + LoRA) 
 Протокол совместим с deep_poker.html:  POST /  |  GET /stats  |  PUT /
 Запуск:  python deep_server_v3.py
 """
-import os, re, json, time, threading, traceback
+import os, gc, re, json, time, threading, traceback
 from urllib.parse import urlparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from socketserver import ThreadingMixIn
@@ -26,7 +26,7 @@ BASE_MODEL_ID    = os.getenv("POKER_BASE_MODEL", "Qwen/Qwen2.5-1.5B-Instruct")
 # BASE_MODEL_ID    = os.getenv("POKER_BASE_MODEL", "google/gemma-3-4b-it")
 LORA_PATH        = os.getenv("POKER_LORA", "./train_2/dataset_2000_v2")
 # LORA_PATH        = os.getenv("POKER_LORA", "lora_preflop_stage_3")
-LORA_ONLINE_PATH = os.getenv("POKER_LORA_OUT", "./train_2/lora_online_learning")
+LORA_ONLINE_PATH = os.getenv("POKER_LORA_OUT", "./train_2/lora_online_learning_qwen")
 DATA_DIR         = os.getenv("POKER_DATA_DIR", "./train_2")
 MEMORY_FILE = os.path.join(DATA_DIR, "poker_memory.json")
 BUFFER_FILE = os.path.join(DATA_DIR, "training_buffer.json")
@@ -41,6 +41,8 @@ LR           = 1e-5
 USE_CHAT_TEMPLATE = False   # ЕДИНЫЙ формат для инференса и обучения
 TRAIN_LOSSES      = False   # не подкреплять проигравшие действия
 GRAD_ACCUM_NORM   = True
+SELFTEST          = True
+EMPTY_CACHE       = True    # только после обучения
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -203,13 +205,13 @@ def load_model():
         try:
             model = PeftModel.from_pretrained(model, LORA_PATH, is_trainable=True)
             model.eval(); LORA_AVAILABLE = True
-            print(f"✅ LoRA загружена: {LORA_PATH}")
+            print(f"✔ LoRA загружена: {LORA_PATH}")
         except Exception as e:
             print(f"⚠️ Ошибка LoRA: {e}")
     else:
         print(f"⚠️ LoRA не найдена или peft не установлен: {LORA_PATH}")
     n_train = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(f"✅ Модель на {model.device} | обучаемых параметров: {n_train/1e6:.2f}M")
+    print(f"✔ Модель на {model.device} | обучаемых параметров: {n_train/1e6:.2f}M")
     if cuda:
         print(f"   Память GPU: {torch.cuda.memory_allocated()/1e9:.2f} GB")
     if n_train == 0:
@@ -322,7 +324,7 @@ def train_batch(batch):
                 last_loss = total / valid
                 stats["batches_trained"] += 1
                 threading.Thread(target=save_lora_weights, daemon=True).start()
-                print(f"✅ Loss: {last_loss:.4f} | valid={valid} skip={skipped} | grad_norm={float(norm):.3f}")
+                print(f"✔ Loss: {last_loss:.4f} | valid={valid} skip={skipped} | grad_norm={float(norm):.3f}")
             else:
                 stats["train_errors"] += 1
                 print("❌ Нечисловой градиент — шаг пропущен, веса не тронуты")
@@ -368,6 +370,54 @@ def trainer_loop():
         trainer.update(running=False, last_result=res, reported=False, last_train_ts=time.time())
         print(f"⏱ Батч обработан за {time.time()-t0:.1f}s")
         save_all_data()
+
+def vram_info():
+    if not torch.cuda.is_available():
+        return None
+    return {"alloc": round(torch.cuda.memory_allocated() / 1024**3, 2),
+            "reserved": round(torch.cuda.memory_reserved() / 1024**3, 2)}
+
+
+def free_vram():
+    if EMPTY_CACHE and torch.cuda.is_available():
+        gc.collect()
+        torch.cuda.empty_cache()
+
+def selftest():
+    print("\n" + "=" * 66); print("  САМОТЕСТ"); print("=" * 66)
+    try:
+        t0 = time.time()
+        prompt = """СТАДИЯ: ТЁРН (TURN)
+ТВОЕ ИМЯ: Олег
+ТВОИ КАРТЫ: 10♥ 8♠
+БОРД: 10♠ 8♥ 8♦ 6♦
+БАНК: $290, СТЕК: $910
+СТАВКА BET: $0
+МИН. РЕЙЗ ДО: $20
+МАКС. СТАВКА: $910
+ПОЗИЦИЯ: MP
+ИГРОКОВ В РАЗДАЧЕ: 3
+ДЕЙСТВИЯ НА УЛИЦЕ: Алиса чек
+Если СТАВКА BET: $0 > 0, то в ответе ДЕЙСТВИЕ: [FOLD/CHECK/CALL/RAISE], [CHECK] -НЕВОЗМОЖЕН! ТОЛЬКО [FOLD/CALL/RAISE] учитывай это ВАЖНО!
+ВАЖНО! Ничего не добавляй! Отвечай СТРОГО так:
+АНАЛИЗ: [короткое объяснение]
+ДЕЙСТВИЕ: [FOLD/CHECK/CALL/RAISE]
+СУММА: [число — итоговая ставка при RAISE, иначе 0]
+"""
+        txt, act, amt, _ = run_inference(prompt_text=prompt)
+        print("-"*80)
+        print("ОТВЕТ МОДЕЛИ")
+        print("="*80)
+        print(txt)
+        print("="*80)
+        print(f"⏱ {time.time()-t0:.1f}s → {act} {amt} | VRAM {vram_info()}")
+        print("✔ Модель отвечает" if txt else "❌ Пустой ответ")
+    except Exception as e:
+        traceback.print_exc()
+        print(f"❌ Самотест упал: {e}")
+    # print("=" * 66 + "\n")
+
+
 
 # ================= HTTP =================
 class ModelHandler(BaseHTTPRequestHandler):
@@ -439,7 +489,12 @@ class ModelHandler(BaseHTTPRequestHandler):
             text, act, amount, analysis = run_inference(prompt, body.get("max_tokens", MAX_NEW), stage)
             dt = time.time() - t0
             stats["preflop_queries" if stage == "preflop" else "postflop_queries"] += 1
-            print(f"📥 {stage} | {len(prompt)} симв → {act} {amount} за {dt:.1f}s")
+            print("-"*80)
+            print(f"📥 {stage} | {len(prompt)} симв. за {dt:.1f}s")
+            print(f"📤 {text.splitlines()[0][:420]}")
+            print(f"📤 ДЕЙСТВИЕ: {act}")
+            print(f"📤 СУММА: {amount}")
+            print("="*80)
             self._json(200, {"response": text, "action": act, "amount": amount,
                              "analysis": analysis, "stage": stage, "elapsed": round(dt, 2)})
         except Exception as e:
@@ -502,7 +557,7 @@ def serve():
     srv = ThreadedHTTPServer((HOST, PORT), ModelHandler)
     threading.Thread(target=trainer_loop, daemon=True, name="Trainer").start()
     print("\n" + "=" * 60); print("🚀 СЕРВЕР ЗАПУЩЕН"); print("=" * 60)
-    print(f"📡 http://{HOST}:{PORT}  |  📊 /stats  |  🧠 LoRA: {'✅' if LORA_AVAILABLE else '⚠️ базовая'}")
+    print(f"📡 http://{HOST}:{PORT}  |  📊 /stats  |  🧠 LoRA: {'✔' if LORA_AVAILABLE else '⚠️ базовая'}")
     print(f"📏 MAX_SEQ_LEN={MAX_SEQ_LEN} | формат: {'chat' if USE_CHAT_TEMPLATE else 'raw'} (единый для train/infer)")
     print(f"🎓 Обучение: буфер {MEMORY_LIMIT}, losses={'да' if TRAIN_LOSSES else 'нет'}, фоновый поток")
     try:
@@ -514,12 +569,14 @@ def serve():
         save_all_data()
         if model is not None and LORA_AVAILABLE: save_lora_weights()
         srv.server_close()
-        print("✅ Остановлен")
+        print("✔ Остановлен")
 
 def main():
     print("\n📂 Загрузка сохранённых данных...")
     load_all_data()
     load_model()
+    if SELFTEST:
+        selftest()
     serve()
 
 if __name__ == "__main__":

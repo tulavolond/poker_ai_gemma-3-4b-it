@@ -25,7 +25,7 @@ load_dotenv()
 # ============================================================
 BASE_MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
 LORA_PATH = "./train_2/dataset_2000_v2"
-LORA_ONLINE_PATH = "./train_2/lora_online_learning"
+LORA_ONLINE_PATH = "./train_2/lora_online_learning_qwen"
 
 MEMORY_FILE = "./train_2/poker_memory.json"
 BUFFER_FILE = "./train_2/training_buffer.json"
@@ -267,7 +267,7 @@ def run_inference(prompt_text: str, max_tokens=120, stage_hint=None):
     )
     inputs = tokenizer(
         chat_prompt, return_tensors="pt",
-        truncation=True, max_length=2048
+        truncation=True, max_length=768
     ).to(model.device)
     input_length = inputs["input_ids"].shape[1]
 
@@ -618,7 +618,7 @@ def train_batch():
             )
             enc = tokenizer(
                 train_text, return_tensors="pt",
-                truncation=True, max_length=1500
+                truncation=True, max_length=768
             ).to(model.device)
 
             user_text = tokenizer.apply_chat_template(
@@ -739,7 +739,7 @@ class ModelHandler(BaseHTTPRequestHandler):
             print(f"📥 POST stage={stage}, prompt={len(prompt)} симв.")
 
             # 1. Инференс
-            response_text = run_inference(prompt, body.get('max_tokens', 120))
+            response_text = run_inference(prompt, body.get('max_tokens', 155))
 
             # 2. Постобработка (главное!)
             # response_text = fix_response(response_text, prompt, stage)
@@ -751,7 +751,7 @@ class ModelHandler(BaseHTTPRequestHandler):
             else:
                 stats["postflop_queries"] += 1
 
-            print(f"📤 Ответ за {elapsed:.1f}s: {response_text[:200]}")
+            print(f"📤 Ответ за {elapsed:.1f}s: {response_text}")
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/json; charset=utf-8')

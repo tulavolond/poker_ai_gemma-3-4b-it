@@ -555,13 +555,31 @@ def selftest():
     print("\n" + "=" * 66); print("  САМОТЕСТ"); print("=" * 66)
     try:
         t0 = time.time()
-        txt, act, amt, _ = run_inference(
-            "[СТАДИЯ: PREFLOP]\nСТАДИЯ: ПРЕФЛОП\nТВОИ КАРТЫ: A♠ A♥\nБОРД: —\n"
-            "БАНК: $30, СТЕК: $970\nНУЖНО КОЛЛИРОВАТЬ: $20\n\n"
-            "Ответь СТРОГО:\nАНАЛИЗ: [объяснение]\nДЕЙСТВИЕ: [FOLD/CHECK/CALL/RAISE]\nСУММА: [число]")
+        prompt = """СТАДИЯ: ТЁРН (TURN)
+ТВОЕ ИМЯ: Олег
+ТВОИ КАРТЫ: 10♥ 8♠
+БОРД: 10♠ 8♥ 8♦ 6♦
+БАНК: $290, СТЕК: $910
+СТАВКА BET: $0
+МИН. РЕЙЗ ДО: $20
+МАКС. СТАВКА: $910
+ПОЗИЦИЯ: MP
+ИГРОКОВ В РАЗДАЧЕ: 3
+ДЕЙСТВИЯ НА УЛИЦЕ: Алиса чек
+Если СТАВКА BET: $0 > 0, то в ответе ДЕЙСТВИЕ: [FOLD/CHECK/CALL/RAISE], [CHECK] -НЕВОЗМОЖЕН! ТОЛЬКО [FOLD/CALL/RAISE] учитывай это ВАЖНО!
+ВАЖНО! Ничего не добавляй! Отвечай СТРОГО так:
+АНАЛИЗ: [короткое объяснение]
+ДЕЙСТВИЕ: [FOLD/CHECK/CALL/RAISE]
+СУММА: [число — итоговая ставка при RAISE, иначе 0]
+"""
+        txt = run_inference(prompt_text=prompt)
+        print("-"*80)
+        print("ОТВЕТ МОДЕЛИ")
+        print("="*80)
         print(txt)
-        print(f"⏱ {time.time()-t0:.1f}s → {act} {amt} | VRAM {vram_info()}")
-        print("✅ Модель отвечает" if act else "❌ Пустой ответ")
+        print("="*80)
+        print(f"⏱ {time.time()-t0:.1f}s → | VRAM {vram_info()}")
+        print("✅ Модель отвечает" if txt else "❌ Пустой ответ")
     except Exception as e:
         traceback.print_exc()
         print(f"❌ Самотест упал: {e}")

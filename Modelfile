@@ -1,5 +1,9 @@
+# 1. Указываем базовую модель
+FROM gemma3:4b
+# FROM qwen2.5:3b
 # Указываем путь к объединенным весам
-FROM ./poker_gemma3_demo_lora
+FROM ./poker_gemma_lora_merged
+
 # Жестко прописываем шаблон диалога для Gemma 3, чтобы избежать ошибки чередования ролей
 TEMPLATE """{{ if .System }}<|im_start|>system
 {{ .System }}<|im_end|>

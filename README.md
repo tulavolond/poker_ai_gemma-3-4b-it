@@ -1,3 +1,45 @@
+
+
+# Конвертирование
+git clone https://github.com/ggml-org/llama.cpp
+pip install gguf protobuf sentencepiece
+python llama.cpp/convert_hf_to_gguf.py D:/py2026/poker2/gemma/poker_gemma_lora_merged --outfile D:/py2026/poker2/gemma/gemma-poker-epoch6.gguf --outtype bf16
+ollama create gemma-poker-epoch6:26M -f ./Modelfile
+
+# Modelfile
+FROM D:/py2026/poker2/gemma/gemma-poker-epoch6.gguf
+
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ .Response }}<|im_end|>"""
+
+PARAMETER temperature 0.0
+PARAMETER top_p 0.1
+PARAMETER top_k 10
+PARAMETER repeat_penalty 1.15
+PARAMETER num_ctx 4096
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|im_start|>"
+
+SYSTEM "Ты профессиональный и очень внимательный к деталям покерный игрок в Техасский Холдем. Ты принимаешь карты в формате «на столе [карты], у меня [карты]» и выводишь точные вероятности победы и комбинаций строго по заданному шаблону с символами ♠♥♦♣, без лишних приветствий."
+
+
+train_2\deep_server_qwen4.py
+
+train_poker_and_continue.py
+deep_train_all_v4_latest.py
+deep_server_v2_good_server.py
+D:\py2026\poker2\gemma\index.html
+train_2\deep_server_v2_good_server.py
+train_2\deep_server_qwen4_gemma.py
+train_2\deep_server.py
+
+# good server -Qwen
+python ./train_2/deep_server_v2_good_server.py
+http://192.168.1.103:8000/gemma/
 # Example
 https://poker.t2020.ru/deep_poker
 https://poker.t2020.ru

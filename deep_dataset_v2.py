@@ -21,7 +21,7 @@ from dataset_flop_v2 import (
     generate_board_with_texture
 )
 
-DATA_SET_FILE = "./train_2/dataset_2000_v2.json"
+DATA_SET_FILE = "./dataset_2000_v3.json"
 
 
 RANGE_STRINGS = {

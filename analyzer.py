@@ -24,6 +24,12 @@ class Card:
     def __init__(self, rank, suit):
         self.rank = rank
         self.suit = suit
+        
+    def __str__(self):
+        # Находим строковое представление ранга для вывода
+        reverse_names = {11: 'J', 12: 'Q', 13: 'K', 14: 'A'}
+        rank_str = reverse_names.get(self.rank, str(self.rank))
+        return f"{rank_str}{self.suit}"
 
     def __repr__(self):
         return f"{RANK_NAMES.get(self.rank, self.rank)}{self.suit}"

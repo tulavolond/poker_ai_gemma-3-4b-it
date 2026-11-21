@@ -19,7 +19,7 @@ DATA_FILE   = "./gemma/dataset_2000_v2.json"
 OUTPUT_DIR  = "outputs_poker_gemma"   # папка чекпоинтов — не менять между запусками!
 FINAL_DIR   = "poker_gemma_lora"      # итоговые LoRA-адаптеры
 MAX_SEQ_LEN = 768
-MAX_STEPS   = 3500
+MAX_STEPS   = 3500    # эпох 3
 SAVE_EVERY  = 100     # автосохранение каждые N шагов
 KEEP_LAST   = 3       # сколько последних чекпоинтов хранить (None = хранить все)
 # ─────────────────────────────────

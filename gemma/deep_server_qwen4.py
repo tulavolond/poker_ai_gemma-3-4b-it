@@ -24,7 +24,7 @@ except Exception:
 # ================= КОНФИГ =================
 BASE_MODEL_ID    = os.getenv("POKER_BASE_MODEL", "Qwen/Qwen2.5-1.5B-Instruct")
 LORA_PATH        = os.getenv("POKER_LORA", "./train_2/dataset_2000_v2")
-LORA_ONLINE_PATH = os.getenv("POKER_LORA_OUT", "./train_2/lora_online_learning")
+LORA_ONLINE_PATH = os.getenv("POKER_LORA_OUT", "./train_2/lora_online_learning_qwen")
 DATA_DIR         = os.getenv("POKER_DATA_DIR", "./train_2")
 MEMORY_FILE = os.path.join(DATA_DIR, "poker_memory.json")
 BUFFER_FILE = os.path.join(DATA_DIR, "training_buffer.json")

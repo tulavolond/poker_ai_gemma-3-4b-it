@@ -1,137 +1,5 @@
 [
  {
-  "stage": "Ривер",
-  "my_cards": "K♦, Q♥",
-  "board": "2♠, 3♥, 6♣, 9♠, 9♣",
-  "pot": 20,
-  "to_call": 0,
-  "stack": 985,
-  "action_taken": "CHECK ",
-  "outcome": "WIN (Победа)",
-  "lesson": "Это было правильное решение, стиль сработал."
- },
- {
-  "stage": "Ривер",
-  "my_cards": "A♥, K♣",
-  "board": "5♦, J♥, 6♠, 9♠, 5♣",
-  "pot": 25,
-  "to_call": 0,
-  "stack": 975,
-  "action_taken": "CHECK ",
-  "outcome": "WIN (Победа)",
-  "lesson": "Это было правильное решение, стиль сработал."
- },
- {
-  "stage": "Ривер",
-  "my_cards": "10♣, 8♣",
-  "board": "9♠ A♦ 6♠ 3♠ A♥",
-  "pot": 20,
-  "to_call": 0,
-  "stack": 985,
-  "action_taken": "CHECK ",
-  "outcome": "LOSS (Проигрыш)",
-  "lesson": "Колл был математически неверным или соперник оказался сильнее."
- },
- {
-  "stage": "Ривер",
-  "my_cards": "10♠, J♦",
-  "board": "2♠, Q♥, 5♣, 6♠, A♣",
-  "pot": 20,
-  "to_call": 0,
-  "stack": 970,
-  "action_taken": "CHECK ",
-  "outcome": "LOSS (Проигрыш)",
-  "lesson": "Колл был математически неверным или соперник оказался сильнее."
- },
- {
-  "stage": "flop",
-  "my_cards": "3♣ 8♦",
-  "board": "10♣ 7♦ 7♠",
-  "pot": 120,
-  "to_call": 20,
-  "stack": 920,
-  "action_taken": "RAISE 40",
-  "outcome": "WIN",
-  "lesson": "Выиграл банк с комбинацией без вскрытия. Линия RAISE 40 → RAISE 40 оправдалась."
- },
- {
-  "stage": "flop",
-  "my_cards": "J♠ 5♦",
-  "board": "A♣ 6♠ 10♠",
-  "pot": 80,
-  "to_call": 0,
-  "stack": 790,
-  "action_taken": "RAISE 790",
-  "outcome": "WIN",
-  "lesson": "Выиграл банк с комбинацией без вскрытия. Линия CALL → RAISE 790 оправдалась."
- },
- {
-  "stage": "river",
-  "my_cards": "10♣ 8♠",
-  "board": "J♠ K♥ 4♥ 5♣ 10♦",
-  "pot": 60,
-  "to_call": 0,
-  "stack": 805,
-  "action_taken": "CHECK",
-  "outcome": "WIN",
-  "lesson": "Выиграл банк с комбинацией Пара десяток. Линия CHECK → CHECK → CHECK → CHECK оправдалась."
- },
- {
-  "stage": "preflop",
-  "my_cards": "6♥ K♥",
-  "board": "—",
-  "pot": 45,
-  "to_call": 30,
-  "stack": 775,
-  "action_taken": "RAISE 60",
-  "outcome": "WIN",
-  "lesson": "Выиграл банк с комбинацией без вскрытия. Линия RAISE 60 оправдалась."
- },
- {
-  "stage": "river",
-  "my_cards": "3♣ 7♥",
-  "board": "7♣ A♦ 3♥ J♣ 8♣",
-  "pot": 90,
-  "to_call": 0,
-  "stack": 980,
-  "action_taken": "CHECK",
-  "outcome": "LOSS",
-  "lesson": "Проиграл $20: Две пары (семёрок и троек) оказалась слабее. Линия CALL → CHECK → CHECK → CHECK была слишком широкой против агрессии."
- },
- {
-  "stage": "river",
-  "my_cards": "K♣ 8♥",
-  "board": "4♦ 7♣ 10♠ 4♥ 5♣",
-  "pot": 1652,
-  "to_call": 0,
-  "stack": 144,
-  "action_taken": "CHECK",
-  "outcome": "WIN",
-  "lesson": "Выиграл $1652 с комбинацией Пара четвёрок. Линия CALL → CHECK → CHECK → CHECK оправдалась."
- },
- {
-  "stage": "river",
-  "my_cards": "9♣ 8♥",
-  "board": "Q♠ 10♣ 7♣ J♣ 2♠",
-  "pot": 130,
-  "to_call": 0,
-  "stack": 114,
-  "action_taken": "CHECK",
-  "outcome": "WIN",
-  "lesson": "Выиграл $130 с комбинацией Стрит до дама. Линия CHECK → RAISE 20 → CHECK → CHECK оправдалась."
- },
- {
-  "stage": "river",
-  "my_cards": "4♦ J♠",
-  "board": "5♦ 7♦ J♦ 4♠ 7♣",
-  "pot": 75,
-  "to_call": 0,
-  "stack": 900,
-  "action_taken": "CHECK",
-  "outcome": "LOSS",
-  "lesson": "Проиграл $30: Две пары (валетов и семёрок) оказалась слабее. Линия CHECK → CHECK → CHECK → CHECK была слишком широкой против агрессии."
- },
- {
   "stage": "river",
   "my_cards": "10♠ 6♦",
   "board": "3♥ 4♣ 8♥ K♦ 5♦",
@@ -1098,5 +966,137 @@
   "action_taken": "RAISE 368",
   "outcome": "LOSS (Проигрыш)",
   "lesson": "Агрессия не оправдалась: оцени текстуру борда и эквити."
+ },
+ {
+  "stage": "river",
+  "my_cards": "5♠ K♦",
+  "board": "6♥ 3♦ 7♣ K♣ 3♥",
+  "pot": 100,
+  "to_call": 0,
+  "stack": 980,
+  "action_taken": "CHECK",
+  "outcome": "WIN",
+  "lesson": "Выиграл $100 с комбинацией Две пары (королей и троек). Линия CALL → CHECK → CHECK → CHECK оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "5♦ A♥",
+  "board": "4♥ 4♠ K♦ 7♣ 7♥",
+  "pot": 80,
+  "to_call": 0,
+  "stack": 1060,
+  "action_taken": "CHECK",
+  "outcome": "WIN",
+  "lesson": "Выиграл $80 с комбинацией Две пары (семёрок и четвёрок). Линия CHECK → CHECK → CHECK → CHECK оправдалась."
+ },
+ {
+  "stage": "turn",
+  "my_cards": "2♦ A♥",
+  "board": "9♣ A♣ 6♥ 3♦",
+  "pot": 50,
+  "to_call": 0,
+  "stack": 980,
+  "action_taken": "RAISE 980",
+  "outcome": "WIN",
+  "lesson": "Выиграл $1030 без вскрытия. Линия CHECK → CHECK → RAISE 980 оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "8♠ 2♦",
+  "board": "4♦ 4♥ 8♣ 8♦ A♣",
+  "pot": 50,
+  "to_call": 0,
+  "stack": 1110,
+  "action_taken": "CHECK",
+  "outcome": "WIN",
+  "lesson": "Выиграл $50 с комбинацией Фулл-хаус (восьмёрок + четвёрок). Линия CALL → CHECK → CHECK → CHECK оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "7♦ A♠",
+  "board": "7♠ 4♦ 9♦ A♦ J♥",
+  "pot": 80,
+  "to_call": 0,
+  "stack": 940,
+  "action_taken": "CHECK",
+  "outcome": "WIN",
+  "lesson": "Выиграл $80 с комбинацией Две пары (тузов и семёрок). Линия CALL → CHECK → CHECK → CHECK оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "J♠ A♣",
+  "board": "J♦ 7♦ 10♥ 7♣ 3♣",
+  "pot": 60,
+  "to_call": 0,
+  "stack": 920,
+  "action_taken": "CHECK",
+  "outcome": "WIN",
+  "lesson": "Выиграл $60 с комбинацией Две пары (валетов и семёрок). Линия CHECK → CHECK → CHECK → CHECK оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "10♣ 5♠",
+  "board": "A♣ J♥ A♥ Q♥ K♦",
+  "pot": 80,
+  "to_call": 0,
+  "stack": 940,
+  "action_taken": "CHECK",
+  "outcome": "WIN",
+  "lesson": "Выиграл $80 с комбинацией Стрит до туз. Линия CALL → CHECK → CHECK → CHECK оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "2♣ 5♣",
+  "board": "10♠ 3♣ A♥ A♣ 4♣",
+  "pot": 1005,
+  "to_call": 480,
+  "stack": 685,
+  "action_taken": "CALL",
+  "outcome": "WIN",
+  "lesson": "Выиграл $1485 с комбинацией Стрит-флеш до 5. Линия CHECK → CHECK → CALL → CHECK → CALL → CHECK → CALL оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "3♦ Q♥",
+  "board": "J♣ Q♣ 3♥ Q♠ J♥",
+  "pot": 120,
+  "to_call": 0,
+  "stack": 1070,
+  "action_taken": "RAISE 30",
+  "outcome": "WIN",
+  "lesson": "Выиграл $150 без вскрытия. Линия CALL → CHECK → CHECK → RAISE 30 оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "A♦ 8♥",
+  "board": "3♥ 6♠ 7♠ 9♠ 5♠",
+  "pot": 135,
+  "to_call": 0,
+  "stack": 855,
+  "action_taken": "CHECK",
+  "outcome": "WIN",
+  "lesson": "Выиграл $135 с комбинацией Стрит до 9. Линия CALL → CHECK → CHECK → CHECK оправдалась."
+ },
+ {
+  "stage": "river",
+  "my_cards": "6♠ 2♠",
+  "board": "Q♠ 6♥ 5♠ 9♣ 4♥",
+  "pot": 105,
+  "to_call": 0,
+  "stack": 1130,
+  "action_taken": "CHECK",
+  "outcome": "WIN",
+  "lesson": "Выиграл $105 с комбинацией Пара шестёрок. Линия CHECK → CHECK → CHECK → CHECK оправдалась."
+ },
+ {
+  "stage": "turn",
+  "my_cards": "5♥ Q♠",
+  "board": "A♠ Q♥ Q♦ 4♦",
+  "pot": 255,
+  "to_call": 30,
+  "stack": 1115,
+  "action_taken": "RAISE 270",
+  "outcome": "WIN",
+  "lesson": "Выиграл $705 с комбинацией Тройка дам. Линия CALL → CALL → RAISE 270 оправдалась."
  }
 ]

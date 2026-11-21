@@ -3147,7 +3147,7 @@
     }
     async function apiDecide(prompt) {
       console.log("prompt:\n", prompt);
-      return api('/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, max_tokens: 250 }) }, S.timeout * 1000);
+      return api('/', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt, max_tokens: 160 }) }, S.timeout * 1000);
     }
     /* --- learning PUT queue --- */
     const putQueue = []; let putRunning = false;
@@ -3222,7 +3222,7 @@
 ИГРОКОВ В РАЗДАЧЕ: ${players.filter(inHand).length}
 ДЕЙСТВИЯ НА УЛИЦЕ: ${hist}
 Если СТАВКА BET: $${ctx.toCall} > 0, то в ответе ДЕЙСТВИЕ: [FOLD/CHECK/CALL/RAISE], CHECK НЕВОЗМОЖЕН! ТОЛЬКО [FOLD/CALL/RAISE] учитывай это ВАЖНО!
-ВАЖНО! Отвечай СТРОГО так:
+ВАЖНО! Ничего не добавляй! Отвечай СТРОГО так:
 АНАЛИЗ: [короткое объяснение]
 ДЕЙСТВИЕ: [FOLD/CHECK/CALL/RAISE]
 СУММА: [число — итоговая ставка при RAISE, иначе 0]`;

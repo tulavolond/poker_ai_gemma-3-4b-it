@@ -12,8 +12,8 @@ load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 MODEL_ID = "google/gemma-3-4b-it"
-LORA_PATH = "./poker_gemma3_lora"
-MERGED_PATH = "./poker_gemma3_merged"
+LORA_PATH = "./gemma/outputs_poker_gemma"
+MERGED_PATH = "./gemma/outputs_poker_gemma_merged"
 
 print("Загрузка базовой модели...")
 model = AutoModelForCausalLM.from_pretrained(
