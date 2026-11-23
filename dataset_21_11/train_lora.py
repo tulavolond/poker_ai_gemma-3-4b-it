@@ -1,12 +1,18 @@
 # train_lora.py
-import json, torch
+import os, json, torch
 from datasets import Dataset
 from transformers import (AutoTokenizer, AutoModelForCausalLM, Trainer,
                           TrainingArguments, DataCollatorForSeq2Seq)
 from peft import LoraConfig, get_peft_model
 
-MODEL, DATA, OUT = "Qwen/Qwen2.5-1.5B-Instruct", "./dataset_21_11/poker.jsonl", "./dataset_21_11/qwen25-poker-lora"
+# MODEL, DATA, OUT = "Qwen/Qwen2.5-1.5B-Instruct", "./dataset_21_11/poker.jsonl", "./dataset_21_11/qwen25-poker-lora"
+MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
+DATA, OUT = "./dataset_21_11/stage1_train.jsonl", "./dataset_21_11/qwen25-stage1-lora"   # было poker.jsonl / qwen25-poker-lora
 MAX_LEN = 712
+from dotenv import load_dotenv
+
+load_dotenv()
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 tok = AutoTokenizer.from_pretrained(MODEL)
 
@@ -26,6 +32,7 @@ ds = Dataset.from_list([encode(json.loads(l)) for l in open(DATA, encoding="utf-
 
 model = AutoModelForCausalLM.from_pretrained(
     MODEL, dtype=torch.float16,        # Pascal: fp16-хранение, без bf16
+    token=HF_TOKEN,
     attn_implementation="sdpa",              # flash_attention_2 на sm_61 недоступен
     device_map={"": 0})
 model.config.use_cache = False
@@ -43,7 +50,7 @@ model.print_trainable_parameters()           # должно быть ~18M обу
 args = TrainingArguments(
     output_dir=OUT,
     per_device_train_batch_size=1, gradient_accumulation_steps=4,
-    num_train_epochs=12,                     # 17 примеров -> ~60 шагов оптимизатора 12
+    num_train_epochs=3,                     # 17 примеров -> ~60 шагов оптимизатора 12
     learning_rate=2e-4, lr_scheduler_type="cosine", warmup_steps=5,
     fp16=True, bf16=False,                   # AMP + GradScaler, работает на Pascal
     optim="adamw_torch", max_grad_norm=1.0,

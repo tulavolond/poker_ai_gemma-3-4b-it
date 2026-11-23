@@ -1,0 +1,92 @@
+{"task": "compare", "bucket": "quads_full", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: каре > фулл-хаус → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "straight_vs", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: стрит > пара → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: сет > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "straight_vs", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: стрит > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара 10>6 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "split", "gold": "split", "pred": "split", "raw": "<thought>\nСравнение: все позиции равны → ничья.\n</thought>\n<definition>\nНичья (Split Pot).\n</definition>"}
+{"task": "compare", "bucket": "flush_flush", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: карта1 A>Q → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "pair_deep", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара Q=Q | кикер1 A=A | кикер2 K>J → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "near_flush", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: фулл-хаус > две пары → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "flush_straight", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: флеш > стрит → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "near_straight", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: две пары > старшая карта → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "flush_flush", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: карта1 A=A | карта2 K=K | карта3 Q>10 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "straight_vs", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: стрит > старшая карта → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: фулл-хаус > две пары → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "split", "gold": "split", "pred": "split", "raw": "<thought>\nСравнение: все позиции равны → ничья.\n</thought>\n<definition>\nНичья (Split Pot).\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара > старшая карта → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: старшая пара A=A | младшая пара Q>5 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "full_flush", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: фулл-хаус > флеш → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара Q>7 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: две пары > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "twopair_tb", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: старшая пара 8=8 | младшая пара 3=3 | кикер K>J → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "near_flush", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара > старшая карта → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: две пары > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара A>7 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара K>9 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "same_tb", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара Q=Q | кикер1 A>J → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: две пары > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: карта1 A=A | карта2 Q=Q | карта3 J>10 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "flush_straight", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: флеш > стрит → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "near_straight", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: сет > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "twopair_tb", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: старшая пара A=A | младшая пара 2=2 | кикер K>9 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "pair_deep", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара 2=2 | кикер1 K=K | кикер2 J>10 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "flush_flush", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: карта1 A=A | карта2 J=J | карта3 10>9 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: две пары > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: две пары > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: сет > две пары → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "flush_straight", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: флеш > стрит → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: две пары > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара 8=8 | кикер1 K>Q → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "full_flush", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: фулл > флеш → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: стрит > две пары → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара > старшая карта → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: старшая пара K>10 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: фулл-хаус > две пары → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара > старшая карта → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "broadway", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: стрит > две пары → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "near_flush", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: стрит > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара > старшая карта → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: сет J=J | кикер1 A=A | кикер2 K>10 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: две пары > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "quads_full", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: каре > фулл-хаус → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: каре > две пары → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара > старшая карта → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "full_flush", "gold": "2", "pred": "1", "raw": "<thought>\nСравнение: флеш > фулл-хаус → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "quads_full", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: каре > фулл-хаус → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "wheel", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: старшая 6>5 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "flush_straight", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: флеш > стрит → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "split", "gold": "split", "pred": "split", "raw": "<thought>\nСравнение: все позиции равны → ничья.\n</thought>\n<definition>\nНичья (Split Pot).\n</definition>"}
+{"task": "compare", "bucket": "same_tb", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: сет 4=4 | кикер1 Q=Q | кикер2 9>5 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "twopair_tb", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: старшая пара A=A | младшая пара J=J | кикер 10>8 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "broadway", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: стрит > старшая карта → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "same_tb", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: старшая пара J=J | младшая пара 7=7 | кикер K>10 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "near_straight", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара > старшая карта → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "straight_vs", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: стрит > две пары → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: сет > пара → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "wheel", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: стрит > две пары → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара 5>3 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "split", "gold": "split", "pred": "split", "raw": "<thought>\nСравнение: все позиции равны → ничья.\n</thought>\n<definition>\nНичья (Split Pot).\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: две пары > пара → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара A=A | кикер1 Q>9 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара K>J → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара > старшая карта → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: старшая пара Q>7 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: фулл-хаус > сет → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "flush_flush", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: карта1 Q>J → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара 10>7 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: две пары > пара → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "pair_deep", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара 7=7 | кикер1 A=A | кикер2 Q>8 → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "wheel", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: стрит > старшая карта → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "broadway", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: стрит > старшая карта → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара 9>5 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "twopair_tb", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: старшая пара Q=Q | младшая пара 10=10 | кикер A>9 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "near_straight", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара > старшая карта → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "same_tb", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: старшая пара A>J → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: пара 4=4 | кикер1 K>Q → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "quads_full", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: каре > фулл-хаус → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "broadway", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: стрит > две пары → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "wheel", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: стрит > старшая карта → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "near_flush", "gold": "1", "pred": "1", "raw": "<thought>\nСравнение: сет > две пары → И1.\n</thought>\n<definition>\nПобедитель: Игрок 1.\n</definition>"}
+{"task": "compare", "bucket": "full_flush", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: фулл-хаус > флеш → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "pair_deep", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: пара A=A | кикер1 K=K | кикер2 10>9 → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}
+{"task": "compare", "bucket": "nat", "gold": "2", "pred": "2", "raw": "<thought>\nСравнение: две пары > пара → И2.\n</thought>\n<definition>\nПобедитель: Игрок 2.\n</definition>"}

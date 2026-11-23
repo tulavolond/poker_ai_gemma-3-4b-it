@@ -13,6 +13,17 @@ dataset_21_11/qwen25-poker-lora
 poker_gemma_lora_merged/
 Qwen2.5-1.5B_lora
 
+dataset_21_11/exam_fresh/qwen25-stage1-lora
+dataset_21_11/qwen25-stage1-lora
+dataset_21_11/qwen25-stage2-lora
+dataset_21_11/stage1_v2/qwen25-stage1-lora
+dataset_21_11/stage1_v3/qwen25-stage1-lora
+dataset_21_11/stage1_v4/qwen25-stage1-lora
+dataset_21_11/stage1_v5/qwen25-stage1-lora
+dataset_21_11/stage1_v5/qwen25-v7-lora
+dataset_21_11/stage1_v5/qwen25-v61-lora
+dataset_21_11/stage2/qwen25-bet-lora
+
 outputs_poker_gemma/
 poker_gemma3_demo_lora/
 unsloth_compiled_cache/

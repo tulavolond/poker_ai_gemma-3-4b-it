@@ -1,5 +1,14 @@
+# python ./dataset_21_11/stage1_v5/v7.py
+# python ./dataset_21_11/stage1_v5/train_lora.py      # ~730 примеров × 2 ≈ 30 мин
+# python ./dataset_21_11/stage1_v5/eval_fast.py ./dataset_21_11/stage1_v5/qwen25-v7-lora dev_v6.jsonl
+# python ./dataset_21_11/stage1_v5/eval_fast.py ./dataset_21_11/stage1_v5/qwen25-v7-lora test_v7.jsonl
 
 
+
+# python ./dataset_21_11/stage1_v4/gen_stage1.py
+# python ./dataset_21_11/stage1_v4/verify_stage1.py   # train 480 eval 24 bad_gold 0 overlap 0
+# python ./dataset_21_11/stage1_v4/train_lora.py      # ~40–45 мин
+# python ./dataset_21_11/stage1_v4/eval_stage1.py ./dataset_21_11/stage1_v4/qwen25-stage1-lora
 # Конвертирование
 git clone https://github.com/ggml-org/llama.cpp
 pip install gguf protobuf sentencepiece
