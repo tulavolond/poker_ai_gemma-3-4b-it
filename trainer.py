@@ -465,7 +465,7 @@ def analyze_board(board, hero_cards):
 
 
 # ============ ГЕНЕРАЦИЯ ОБУЧАЮЩИХ ПРИМЕРОВ ============
-def generate_training_examples(count=100):
+def generate_training_examples(count=10):
     """
     Генерирует примеры для обучения LoRA.
     Возвращает список: [{prompt, completion, reward, stage}, ...]
@@ -726,7 +726,7 @@ Pot odds: {bet_river / (pot_river + bet_river):.2%}
 
         if (i + 1) % 50 == 0:
             print(f"  Сгенерировано {i + 1} рук ({(i + 1) * 4} примеров)...")
-
+    print(f"examples[0]:\n{examples[0]}")
     return examples
 
 

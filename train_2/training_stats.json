@@ -1,14 +1,14 @@
 {
-  "pretrain_examples": 0,
-  "online_examples": 116,
-  "batches_trained": 1,
-  "preflop_queries": 871,
-  "postflop_queries": 348,
-  "post_requests": 137,
-  "put_requests": 9,
-  "skipped_losses": 0,
-  "train_errors": 0,
-  "bad_format": 74,
-  "rejected_503": 0,
-  "fix_response_used": 11
+ "pretrain_examples": 0,
+ "online_examples": 116,
+ "batches_trained": 1,
+ "preflop_queries": 874,
+ "postflop_queries": 348,
+ "post_requests": 141,
+ "put_requests": 9,
+ "skipped_losses": 0,
+ "train_errors": 0,
+ "bad_format": 76,
+ "rejected_503": 0,
+ "fix_response_used": 11
 }

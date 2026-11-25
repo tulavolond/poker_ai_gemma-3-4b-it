@@ -10,8 +10,8 @@ from pathlib import Path; HERE = Path(__file__).resolve().parent
 from tqdm import tqdm
 
 # MODEL, DATA, OUT = "Qwen/Qwen2.5-1.5B-Instruct", "./dataset_21_11/poker.jsonl", "./dataset_21_11/qwen25-poker-lora"
-# MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
-MODEL = "google/gemma-3-4b-it"
+MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
+# MODEL = "google/gemma-3-4b-it"
 # DATA = HERE / "stage1_train.jsonl"   # было poker.jsonl / qwen25-poker-lora
 DATA = HERE / "train.jsonl"   # было poker.jsonl / qwen25-poker-lora
 MAX_LEN = 1024

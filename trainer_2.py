@@ -464,7 +464,7 @@ def analyze_board(board, hero_cards):
 
 
 # ============ ГЕНЕРАЦИЯ ОБУЧАЮЩИХ ПРИМЕРОВ ============
-def generate_training_examples(count=500):
+def generate_training_examples(count=10):
     """
     Генерирует примеры для обучения LoRA.
     Возвращает список: [{prompt, completion, reward, stage}, ...]

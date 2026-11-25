@@ -1,0 +1,13 @@
+{
+ "pretrain_examples": 0,
+ "online_examples": 34,
+ "batches_trained": 0,
+ "preflop_queries": 356,
+ "postflop_queries": 377,
+ "post_requests": 739,
+ "put_requests": 34,
+ "skipped_losses": 13,
+ "train_errors": 0,
+ "bad_format": 19,
+ "rejected_503": 0
+}

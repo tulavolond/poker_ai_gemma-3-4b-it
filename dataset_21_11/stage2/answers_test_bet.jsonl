@@ -1,0 +1,144 @@
+{"bucket": "flop_5_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 73.54% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 18bb</action>"}
+{"bucket": "flop_0_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 8.38% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_3_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 34.09% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "turn_4_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 13.64% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_2_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 84.44% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 12bb</action>"}
+{"bucket": "flop_5_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 46.52% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 9bb</action>"}
+{"bucket": "flop_0_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 8.28% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_1_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 86.36% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "river_3_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 8bb</action>"}
+{"bucket": "flop_4_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 1.52% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_1_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 79.09% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 2bb</action>"}
+{"bucket": "turn_0_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 23.86% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "flop_3_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 22.63% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_3_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 34.09% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 8bb</action>"}
+{"bucket": "turn_5_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 29.55% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_4_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 26.26% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_0_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 17.05% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 3bb</action>"}
+{"bucket": "turn_0_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 3bb</action>"}
+{"bucket": "flop_2_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 13.43% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_5_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 35.76% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_1_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 13.03% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_0_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 50.00% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 1.5bb</action>"}
+{"bucket": "river_2_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 50.00% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "flop_1_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 78.38% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 8bb</action>"}
+{"bucket": "flop_4_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 84.95% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "river_4_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_4_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 38.64% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 24bb</action>"}
+{"bucket": "flop_0_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 17.93% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 1.5bb</action>"}
+{"bucket": "turn_1_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 6.82% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_3_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 27.27% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_1_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_2_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 50.00% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "flop_3_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 31.11% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 8bb</action>"}
+{"bucket": "turn_4_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 34.09% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 24bb</action>"}
+{"bucket": "flop_3_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 9.49% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_2_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 24.75% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_2_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_3_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_4_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 36.36% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_3_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 22.73% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_1_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 29.75% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 8bb</action>"}
+{"bucket": "turn_4_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 7.95% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_0_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 11.36% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_0_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 20.45% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 3bb</action>"}
+{"bucket": "turn_5_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 9bb</action>"}
+{"bucket": "river_0_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_5_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 46.59% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 9bb</action>"}
+{"bucket": "flop_3_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 32.22% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 8bb</action>"}
+{"bucket": "turn_3_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 13.64% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_1_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 84.09% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "turn_0_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 4.55% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_0_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 23.59% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 3bb</action>"}
+{"bucket": "flop_5_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 8.33% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_5_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 13.64% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_1_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 18.18% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_1_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 13.64% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_2_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 14.34% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_1_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 15.91% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_5_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_1_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 50.00% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "turn_0_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 88.64% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_1_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_1_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 21.52% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "turn_5_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 9bb</action>"}
+{"bucket": "flop_3_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 22.88% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_2_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 31.82% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 3bb</action>"}
+{"bucket": "flop_0_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 24.14% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_3_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 29.55% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "turn_5_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 36.36% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_5_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 2.83% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_4_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_3_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 78.41% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "river_1_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_0_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 4.44% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_2_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 18.33% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_5_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 50.00% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 9bb</action>"}
+{"bucket": "flop_4_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 39.90% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 24bb</action>"}
+{"bucket": "river_3_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 16bb</action>"}
+{"bucket": "turn_3_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 11.36% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_3_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 16.67% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_5_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 38.64% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 18bb</action>"}
+{"bucket": "flop_1_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 3.13% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_5_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 43.18% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 9bb</action>"}
+{"bucket": "flop_4_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 74.70% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_1_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 22.73% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "river_3_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_4_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 29.55% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_0_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 86.97% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "river_1_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "turn_2_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 68.18% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 3bb</action>"}
+{"bucket": "flop_4_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 18.13% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_2_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 31.46% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "river_5_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 50.00% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 18bb</action>"}
+{"bucket": "turn_5_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 13.64% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_4_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 32.07% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_3_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "river_4_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_2_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 18.18% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_0_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 15.56% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_1_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 21.97% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 8bb</action>"}
+{"bucket": "flop_2_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 24.29% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_2_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 11.36% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_4_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 34.65% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_2_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 27.27% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_0_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_0_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_3_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 28.94% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "river_5_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_2_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 25.00% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_4_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 24bb</action>"}
+{"bucket": "turn_1_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 22.73% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "flop_2_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 15.76% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_0_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 17.05% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 3bb</action>"}
+{"bucket": "flop_3_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 97.22% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "turn_0_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 13.64% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_3_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 28.23% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_2_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 28.38% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 12bb</action>"}
+{"bucket": "flop_0_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 2.12% < пот-оддсы 16.67% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_4_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 100.00% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 12bb</action>"}
+{"bucket": "flop_5_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 38.74% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 18bb</action>"}
+{"bucket": "flop_4_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 39.70% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 12bb</action>"}
+{"bucket": "flop_5_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 30.05% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_1_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 15.86% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_2_border", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 25.00% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 12bb</action>"}
+{"bucket": "flop_0_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 27.37% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 1.5bb</action>"}
+{"bucket": "river_2_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.00% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_2_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 11.36% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "river_0_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 50.00% >= пот-оддсы 16.67% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_4_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 32.95% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_4_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 25.00% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "turn_2_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 50.00% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 12bb</action>"}
+{"bucket": "turn_2_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 22.73% < пот-оддсы 25.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_3_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 99.24% >= пот-оддсы 28.57% → колл выгоден.\n</thought>\n<action>Колл 8bb</action>"}
+{"bucket": "turn_4_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 70.45% >= пот-оддсы 33.33% → колл выгоден.\n</thought>\n<action>Колл 24bb</action>"}
+{"bucket": "flop_1_far_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 0.30% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_2_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 73.33% >= пот-оддсы 25.00% → колл выгоден.\n</thought>\n<action>Колл 6bb</action>"}
+{"bucket": "turn_1_border", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 18.18% < пот-оддсы 20.00% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_1_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 25.10% >= пот-оддсы 20.00% → колл выгоден.\n</thought>\n<action>Колл 4bb</action>"}
+{"bucket": "turn_5_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 31.82% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_5_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 40.81% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 18bb</action>"}
+{"bucket": "flop_4_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 24.09% < пот-оддсы 33.33% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_5_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 27.88% < пот-оддсы 37.50% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}
+{"bucket": "flop_5_far_above", "gold": "call", "pred": "call", "raw": "<thought>\nЭквити 62.78% >= пот-оддсы 37.50% → колл выгоден.\n</thought>\n<action>Колл 9bb</action>"}
+{"bucket": "turn_3_below", "gold": "fold", "pred": "fold", "raw": "<thought>\nЭквити 22.73% < пот-оддсы 28.57% → колл невыгоден.\n</thought>\n<action>Фолд</action>"}

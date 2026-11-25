@@ -12,30 +12,11 @@ from tqdm import tqdm
 # import signal
 from dotenv import load_dotenv
 
-# MODEL, DATA, OUT = "Qwen/Qwen2.5-1.5B-Instruct", "./dataset_21_11/poker.jsonl", "./dataset_21_11/qwen25-poker-lora"
-# MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
-# DATA = HERE / "stage1_train.jsonl"   # было poker.jsonl / qwen25-poker-lora
-
-# DATA = HERE / "train.jsonl"   # было poker.jsonl / qwen25-poker-lora
-# OUT = str(HERE / "qwen25-stage1-lora")
-# MAX_LEN = 1024
-
-# DATA = HERE / "train_v6.jsonl"
-# OUT  = str(HERE / "qwen25-v61-lora")
-# MAX_LEN = 1024
-# num_train_epochs = 3        # ответы короткие, нужно закрепить правило сравнения
-
-# DATA = HERE / "train_v7.jsonl"
-# OUT  = str(HERE / "qwen25-v7-lora")     # на этот раз меняем имя!
-# MAX_LEN = 1024
-# num_train_epochs = 2                    # данных больше, loss и так был 0.048
-
 MAX_LEN = 1024
 DATA = HERE / "train_bet.jsonl"
 OUT  = str(HERE / "qwen25-bet-lora")     # на этот раз меняем имя!
 num_train_epochs = 2                    # данных больше, loss и так был 0.048
-# r = 32; lora_alpha = 64; learning_rate = 1e-4
 
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -186,12 +167,13 @@ if last_ckpt:
     print(f"▶️ Продолжаю с {last_ckpt} (шаг {st.global_step}/{st.max_steps})")
 # 4. Тренер
 #stop_cb = CtrlCStop() # callbacks=[stop_cb],
-Trainer(model=model, args=args, train_dataset=ds, callbacks=[CtrlCAndEtaCallback()],
+stop_cb = CtrlCAndEtaCallback()
+trainer = Trainer(model=model, args=args, train_dataset=ds, callbacks=[CtrlCAndEtaCallback()],
         data_collator=DataCollatorForSeq2Seq(tok, padding="longest",
                                              label_pad_token_id=-100)).train(resume_from_checkpoint=last_ckpt)
 # 6. Страховка + сохранение адаптеров
 # step = trainer.state.global_step
-# if stop_cb.requested and not os.path.isdir(os.path.join(OUTPUT_DIR, f"checkpoint-{step}")):
+# if stop_cb.requested and not os.path.isdir(os.path.join(OUT, f"checkpoint-{step}")):
 #     try:                                   # если мягкая остановка не совпала с save_steps
 #         trainer._save_checkpoint(trainer.model, trial=None)
 #         print(f"💾 Дополнительно сохранён checkpoint-{step}")
@@ -200,3 +182,9 @@ Trainer(model=model, args=args, train_dataset=ds, callbacks=[CtrlCAndEtaCallback
 model.save_pretrained(OUT)
 tok.save_pretrained(OUT)
 print(f"✅ сохранены в '{OUT}'")
+train_loss = trainer.metrics.get("train_loss")  # может не быть при resume "в самый конец
+print()
+print("=" * 60)
+print("✅ ОБУЧЕНИЕ ЗАВЕРШЕНО!")
+print("=" * 60)
+print(f"📉 Train loss: {train_loss:.8f}" if train_loss is not None else "📉 Train loss: n/a")

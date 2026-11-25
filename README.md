@@ -1,3 +1,17 @@
+python ./dataset_21_11/poker_server_v2_async.py
+
+# python llama.cpp/convert_hf_to_gguf.py ./qwen25-poker-merged --outfile poker-master.gguf --outtype f16
+
+# stage4
+python ./dataset_21_11/stage4/train_lora.py
+python eval_fast.py ./dataset_21_11/stage4/qwen25-facing-v2-lora ./dataset_21_11/stage4/dev_facing_v2.jsonl 4
+# 🧠 Правило на будущее: Как читать train_loss
+Когда ты обучаешь модель на таких простых правилах (где ответ зависит от пары слов в промпте):
+Loss > 1.0 — модель вообще не понимает задачу.
+Loss 0.1 - 0.3 — модель начала улавливать закономерность.
+Loss < 0.05 — модель выучила правило идеально. Дальше можно останавливаться.
+Наш 0.039 кричал: "Хватит меня мучить, я всё поняла с первого раза!".
+
 # python ./dataset_21_11/stage1_v5/v7.py
 # python ./dataset_21_11/stage1_v5/train_lora.py      # ~730 примеров × 2 ≈ 30 мин
 # python ./dataset_21_11/stage1_v5/eval_fast.py ./dataset_21_11/stage1_v5/qwen25-v7-lora dev_v6.jsonl

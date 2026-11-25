@@ -13,6 +13,13 @@ dataset_21_11/qwen25-poker-lora
 poker_gemma_lora_merged/
 Qwen2.5-1.5B_lora
 
+qwen25*/
+quwen/
+lora_online_learning/
+dataset_21_11/stage1_*/
+
+*dataset_2000_v2/
+
 dataset_21_11/exam_fresh/qwen25-stage1-lora
 dataset_21_11/qwen25-stage1-lora
 dataset_21_11/qwen25-stage2-lora

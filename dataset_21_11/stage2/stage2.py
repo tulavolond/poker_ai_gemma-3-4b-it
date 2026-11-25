@@ -122,10 +122,6 @@ def plan(per_cell):
 seen = set(); sets = {}
 for name, per, cap in [("train",4,6000), ("dev",2,4000), ("test",2,4000)]:
     need = plan(per); rows = []
-    # for st in ("turn","river","flop"):              # флоп самый дорогой — последним
-    #     sub = {k:v for k,v in need.items() if k[0]==st}
-    #     rows += gen(st, sub, cap, seen)
-    #     for k,v in sub.items(): need[k] = v
     for st in ("turn","river","flop"):              # флоп самый дорогой — последним
         sub = {(k[1], k[2]): v for k, v in need.items() if k[0] == st}
         rows += gen(st, sub, cap, seen)
