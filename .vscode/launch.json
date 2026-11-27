@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: ${file}",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "args": ["--adapter", "D:\\py2026\\poker2\\dataset_21_11\\qwen25-decisions-lora", "--port", "8000", "--iters", "300"],
+      "console": "integratedTerminal"
+    }
+  ]
+}

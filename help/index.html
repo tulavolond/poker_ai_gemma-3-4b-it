@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Poker AI — тест обученной модели</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; padding:20px; background:#12151c; color:#e6e9ef;
+         font:14px/1.5 system-ui, Segoe UI, Roboto, sans-serif; }
+  h1 { font-size:18px; margin:0 0 14px; }
+  .wrap { display:grid; grid-template-columns: 380px 1fr; gap:18px; max-width:1200px; }
+  .card { background:#1a1f29; border:1px solid #2a3140; border-radius:10px; padding:14px; }
+  label { display:block; font-size:12px; color:#8b97ab; margin:8px 0 3px; }
+  input, select, button { width:100%; box-sizing:border-box; padding:7px 9px; border-radius:6px;
+         border:1px solid #2f3846; background:#0f131a; color:#e6e9ef; font:13px inherit; }
+  button { cursor:pointer; background:#2b6cb0; border-color:#2b6cb0; font-weight:600; margin-top:10px; }
+  button.sec { background:#232a36; border-color:#333c4c; font-weight:400; }
+  button:disabled { opacity:.5; cursor:wait; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .cards { font-size:26px; letter-spacing:2px; margin:6px 0; }
+  .badge { display:inline-block; padding:4px 10px; border-radius:20px; font-weight:700; font-size:13px; }
+  .FOLD{background:#4a2b2b;color:#ff9d9d} .CALL{background:#2b4a35;color:#9dffb8}
+  .RAISE{background:#4a3f2b;color:#ffd89d} .BET{background:#4a3f2b;color:#ffd89d}
+  .CHECK{background:#2b3a4a;color:#9dc9ff}
+  pre { background:#0f131a; border:1px solid #2a3140; border-radius:6px; padding:10px;
+        white-space:pre-wrap; word-break:break-word; font-size:12px; max-height:260px; overflow:auto; }
+  .kv { font-size:12px; color:#9fb0c8; }
+  .kv b { color:#e6e9ef; }
+  #log { font-size:12px; max-height:180px; overflow:auto; }
+  #log div { padding:3px 0; border-bottom:1px solid #232a36; }
+  .muted { color:#7b8798; font-size:12px; }
+</style>
+</head>
+<body>
+<h1>♠ Poker AI — движок считает факты, модель применяет правила</h1>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div><label>Улица</label>
+        <select id="street">
+          <option value="preflop">префлоп</option>
+          <option value="flop">флоп</option>
+          <option value="turn">тёрн</option>
+          <option value="river">ривер</option>
+        </select></div>
+      <div><label>Большой блайнд ($)</label><input id="bb" value="10"></div>
+    </div>
+
+    <div class="row">
+      <div><label>Моя позиция</label>
+        <select id="heroPos">
+          <option>UTG</option><option>MP</option><option>CO</option>
+          <option selected>BTN</option><option>SB</option><option>BB</option>
+        </select></div>
+      <div><label>Рейзер (пусто = не открыт)</label>
+        <select id="raiserPos">
+          <option value="">— нет рейза —</option>
+          <option>UTG</option><option>MP</option><option>CO</option>
+          <option>BTN</option><option>SB</option><option>BB</option>
+        </select></div>
+    </div>
+
+    <label>Мои карты</label><input id="hero" value="A♠ K♠">
+    <label>Борд</label><input id="board" value="">
+
+    <div class="row3">
+      <div><label>Банк $</label><input id="pot" value="30"></div>
+      <div><label>Колл $</label><input id="toCall" value="10"></div>
+      <div><label>Стек $</label><input id="stack" value="990"></div>
+    </div>
+    <div class="row3">
+      <div><label>Мин. рейз до $</label><input id="minTo" value="40"></div>
+      <div><label>Макс. (олл-ин) $</label><input id="maxTo" value="1000"></div>
+      <div><label>MC итераций</label><input id="iters" value="300"></div>
+    </div>
+
+    <button class="sec" id="deal">🎲 Раздать случайно</button>
+    <button id="ask">🧠 Ход ИИ</button>
+    <div class="row">
+      <button class="sec" id="apply">✔ Применить</button>
+      <button class="sec" id="next">⏭ Следующая улица</button>
+    </div>
+    <div class="muted" id="health" style="margin-top:10px">проверяю сервер…</div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="cards" id="showCards">—</div>
+      <div id="verdict"><span class="muted">нажми «Ход ИИ»</span></div>
+      <div class="kv" id="facts" style="margin-top:10px"></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <label>&lt;thought&gt;</label><pre id="thought">—</pre>
+      <label>Промпт, который ушёл в модель</label><pre id="prompt">—</pre>
+      <label>Сырой ответ модели</label><pre id="raw">—</pre>
+    </div>
+    <div class="card" style="margin-top:14px"><label>Лог</label><div id="log"></div></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const RANKS = "23456789TJQKA", SUITS = "♠♥♦♣";
+let last = null;
+
+function log(s){ const d=document.createElement('div'); d.textContent=s; $('log').prepend(d); }
+const num = id => parseFloat($(id).value) || 0;
+
+function deck(){ const d=[]; for(const r of RANKS) for(const s of SUITS) d.push((r==='T'?'10':r)+s); return d; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function deal(){
+  const st = $('street').value;
+  const nBoard = {preflop:0, flop:3, turn:4, river:5}[st];
+  const d = shuffle(deck());
+  $('hero').value  = d.slice(0,2).join(' ');
+  $('board').value = d.slice(2,2+nBoard).join(' ');
+  render();
+}
+
+function render(){
+  $('showCards').textContent = ($('hero').value || '—') + '   |   ' + ($('board').value || '—');
+}
+
+function state(){
+  return {
+    street: $('street').value, heroPos: $('heroPos').value, raiserPos: $('raiserPos').value,
+    hero: $('hero').value, board: $('board').value,
+    bb: num('bb'), pot: num('pot'), toCall: num('toCall'), stack: num('stack'),
+    minTo: num('minTo'), maxTo: num('maxTo'), iters: num('iters'), opponents: 1
+  };
+}
+
+async function ask(){
+  $('ask').disabled = true; $('verdict').innerHTML = '<span class="muted">думаю…</span>';
+  try{
+    const r = await fetch('/api/decide', {method:'POST', headers:{'Content-Type':'application/json'},
+                                          body: JSON.stringify(state())});
+    const j = await r.json();
+    if(!j.ok){ $('verdict').innerHTML = '<span class="badge FOLD">ОШИБКА</span> '+j.error; log('❌ '+j.error); return; }
+    last = j;
+    $('verdict').innerHTML =
+      `<span class="badge ${j.action}">${j.action}${j.amount? ' $'+j.amount : ''}</span>
+       <span class="muted"> режим: ${j.mode} · источник: ${j.source} · ${j.ms} мс</span>`;
+    const f = j.facts;
+    $('facts').innerHTML = Object.entries(f)
+      .map(([k,v])=>`${k}: <b>${typeof v==='object'? JSON.stringify(v): v}</b>`).join(' · ');
+    $('thought').textContent = j.thought || '(пусто)';
+    $('prompt').textContent = '[SYSTEM]\n'+j.system+'\n\n[USER]\n'+j.user;
+    $('raw').textContent = j.raw || '(модель отключена, локальное решение)';
+    log(`${j.action} ${j.amount||''} · ${j.mode} · ${j.source} · ${j.ms}мс`);
+  }catch(e){ $('verdict').textContent = 'сеть: '+e; log('❌ '+e); }
+  finally{ $('ask').disabled = false; }
+}
+
+function apply(){
+  if(!last) return log('сначала получи решение');
+  const a = last.action, amt = last.amount || 0;
+  let pot = num('pot'), stack = num('stack'), call = num('toCall');
+  if(a==='CALL'){ pot += call; stack -= call; }
+  else if(a==='RAISE'||a==='BET'){ const add = amt - (a==='RAISE'? 0 : 0); pot += add; stack -= add; }
+  $('pot').value = pot; $('stack').value = stack;
+  $('toCall').value = 0; $('minTo').value = Math.max(num('bb')*2, Math.round(pot*0.5));
+  $('maxTo').value = stack;
+  log(`применено: ${a} ${amt||''} → банк $${pot}, стек $${stack}`);
+}
+
+function nextStreet(){
+  const order = ['preflop','flop','turn','river'];
+  const i = order.indexOf($('street').value);
+  if(i >= 3) return log('ривер — конец раздачи');
+  $('street').value = order[i+1];
+  const need = {preflop:0, flop:3, turn:4, river:5}[$('street').value];
+  const used = new Set(($('hero').value+' '+$('board').value).split(/\s+/).filter(Boolean));
+  let b = $('board').value.split(/\s+/).filter(Boolean);
+  const d = shuffle(deck().filter(c=>!used.has(c) && !b.includes(c)));
+  while(b.length < need) b.push(d.pop());
+  $('board').value = b.join(' ');
+  $('toCall').value = 0;
+  render(); log('улица: '+$('street').value);
+}
+
+$('deal').onclick = deal; $('ask').onclick = ask;
+$('apply').onclick = apply; $('next').onclick = nextStreet;
+['hero','board'].forEach(id => $(id).oninput = render);
+
+fetch('/api/health').then(r=>r.json()).then(j=>{
+  $('health').textContent = j.no_model ? '⚙ движок без модели (--no-model)'
+    : '🧠 модель: ' + (j.adapter || j.model);
+}).catch(()=> $('health').textContent = 'сервер недоступен');
+render();
+</script>
+</body>
+</html>

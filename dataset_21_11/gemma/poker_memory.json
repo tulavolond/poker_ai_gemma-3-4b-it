@@ -713,5 +713,27 @@
     "action_token": "?",
     "outcome": "WIN",
     "lesson": "Выиграл $290 с комбинацией Фулл-хаус (восьмёрок + королей). Линия CALL → CHECK → RAISE 40 → RAISE 80 → RAISE 120 → CHECK оправдалась."
+  },
+  {
+    "stage": "river",
+    "my_cards": "Q♠ 4♣",
+    "board": "K♠ 4♦ 5♣ 2♦ A♠",
+    "pot": 80,
+    "to_call": 0,
+    "stack": 990,
+    "action_token": "?",
+    "outcome": "WIN",
+    "lesson": "Выиграл $80 с комбинацией Пара четвёрок. Линия CALL → CHECK → CHECK → CHECK оправдалась."
+  },
+  {
+    "stage": "river",
+    "my_cards": "10♠ J♥",
+    "board": "4♥ 10♦ 10♣ J♣ 2♣",
+    "pot": 1980,
+    "to_call": 590,
+    "stack": 660,
+    "action_token": "?",
+    "outcome": "WIN",
+    "lesson": "Выиграл $2570 с комбинацией Фулл-хаус (десяток + валетов). Линия CALL → CALL → CHECK → CHECK → RAISE 370 → RAISE 1030 оправдалась."
   }
 ]

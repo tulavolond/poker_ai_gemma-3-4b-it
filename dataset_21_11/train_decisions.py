@@ -2,6 +2,7 @@
 # python ./dataset_21_11/stage1_v5/eval_fast.py ./dataset_21_11/stage1_v5/qwen25-stage1-lora dev.jsonl
 
 import os, json, torch, time, signal
+os.environ["TORCH_LOGS"] = "-all"; import logging; logging.getLogger("torch.utils._pytree").setLevel(logging.ERROR)
 from datasets import Dataset
 from transformers import (AutoTokenizer, AutoModelForCausalLM, Trainer,
                           TrainingArguments, DataCollatorForSeq2Seq, TrainerCallback, TrainerState)
@@ -15,24 +16,10 @@ from dotenv import load_dotenv
 MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 MAX_LEN = 512
 
-# DATA = HERE / "train_bet.jsonl"
-# OUT  = str(HERE / "qwen25-bet-lora")     # на этот раз меняем имя!
-# num_train_epochs = 2                    # данных больше, loss и так был 0.048
-
-# DATA = HERE / "train_preflop.jsonl"
-# OUT  = str(HERE / "qwen25-preflop-lora")
-# num_train_epochs = 4  # Данных меньше, чем в Stage 2, нужно чуть больше эпох
-
-# DATA = HERE / "train_facing.jsonl"
-# OUT  = str(HERE / "qwen25-facing-lora")
-# num_train_epochs = 4 
-
-# DATA = HERE / "train_master.jsonl"
-# OUT  = str(HERE / "qwen25-master-lora") # Новое имя папки!
-# num_train_epochs = 2 
-DATA = HERE / "train_decisions.jsonl"
+JSON_FILE = "train_decisions.jsonl"
+DATA = HERE / JSON_FILE
 OUT  = str(HERE / "qwen25-decisions-lora")
-num_train_epochs = 2
+num_train_epochs = 1
    
 load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -194,40 +181,40 @@ model.print_trainable_parameters()           # должно быть ~18M обу
 #     report_to="none", seed=42)
 
 # Быстрее если ставить на ночь
-# args = TrainingArguments(
-#     output_dir=OUT,
-#     per_device_train_batch_size=2,      # УВЕЛИЧИЛИ В 2 РАЗА (GPU скажет спасибо)
-#     gradient_accumulation_steps=2,      # Эффективный батч остался 4, но шагов меньше
-#     num_train_epochs=num_train_epochs,
-#     learning_rate=2e-4,                 # Чуть выше, так как учим всего 1 эпоху
-#     lr_scheduler_type="cosine", warmup_steps=5,
-#     fp16=True, bf16=False,
-#     optim="adamw_torch", max_grad_norm=1.0,
-#     logging_steps=10, 
-#     # save_strategy="no",                 # УБРАЛИ сохранение чекпоинтов на диск (экономит ~20% времени)
-#     save_strategy="epoch", save_total_limit=2,
-#     dataloader_num_workers=0,
-#     report_to="none", seed=42)
-
-# турбо-настройки обучения все то же самое, только нет сохранения save_strategy="no",
 args = TrainingArguments(
     output_dir=OUT,
-    per_device_train_batch_size=4,
-    gradient_accumulation_steps=1,
+    per_device_train_batch_size=2,      # УВЕЛИЧИЛИ В 2 РАЗА (GPU скажет спасибо)
+    gradient_accumulation_steps=2,      # Эффективный батч остался 4, но шагов меньше
     num_train_epochs=num_train_epochs,
-    learning_rate=2e-4,
-    lr_scheduler_type="cosine",
-    warmup_steps=5,
-    fp16=True,
-    bf16=False,
-    optim="adamw_torch",
-    max_grad_norm=1.0,
-    logging_steps=10,
-    save_strategy="no",
+    learning_rate=2e-4,                 # Чуть выше, так как учим всего 1 эпоху
+    lr_scheduler_type="cosine", warmup_steps=5,
+    fp16=True, bf16=False,
+    optim="adamw_torch", max_grad_norm=1.0,
+    logging_steps=10, 
+    # save_strategy="no",                 # УБРАЛИ сохранение чекпоинтов на диск (экономит ~20% времени)
+    save_strategy="epoch", save_total_limit=2,
     dataloader_num_workers=0,
-    report_to="none",
-    seed=42
-)
+    report_to="none", seed=42)
+
+# турбо-настройки обучения все то же самое, только нет сохранения save_strategy="no",
+# args = TrainingArguments(
+#     output_dir=OUT,
+#     per_device_train_batch_size=4,
+#     gradient_accumulation_steps=1,
+#     num_train_epochs=num_train_epochs,
+#     learning_rate=2e-4,
+#     lr_scheduler_type="cosine",
+#     warmup_steps=5,
+#     fp16=True,
+#     bf16=False,
+#     optim="adamw_torch",
+#     max_grad_norm=1.0,
+#     logging_steps=10,
+#     save_strategy="no",
+#     dataloader_num_workers=0,
+#     report_to="none",
+#     seed=42
+# )
 
 last_ckpt = get_last_checkpoint(OUT) if os.path.isdir(OUT) else None
 if last_ckpt:

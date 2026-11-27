@@ -1,0 +1,7 @@
+{
+  "pretrain_examples": 0,
+  "online_examples": 3,
+  "batches_trained": 0,
+  "preflop_queries": 0,
+  "postflop_queries": 0
+}

@@ -220,7 +220,7 @@ def analyze_flop(board, hero_cards):
     
     return result
 
-def generate_training_examples(count=1000):
+def generate_training_examples(count=100):
     """
     Генерирует примеры для обучения LoRA.
     Для каждой ситуации создаёт идеальный ответ.

@@ -1,6 +1,105 @@
+
+python ./dataset_21_11/server_qwen.py --adapter D:\py2026\poker2\dataset_21_11\qwen25-decisions-lora 
+
 python ./dataset_21_11/poker_server_v2_async.py
 
+# Как добавить модель ИИ в Ollama
+git clone https://github.com/ggml-org/llama.cpp
+pip install gguf protobuf sentencepiece
+
+python merge_qwen_deciption.py
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
+
+# Укажите точную базовую модель, которую вы дообучали (например, Qwen/Qwen2.5-3B-Instruct)
+********************************************
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
+
+base_model_name = "google/gemma-3-4b-it"  # Или "google/gemma-3-4b" в зависимости от того, что тюнили
+lora_folder = "./poker_gemma3_lora"
+output_folder = "./gemma3_poker_merged"
+
+print("Загрузка базовой модели и токенизатора...")
+tokenizer = AutoTokenizer.from_pretrained(base_model_name)
+base_model = AutoModelForCausalLM.from_pretrained(
+    base_model_name,
+    torch_dtype=torch.bfloat16, # или float16
+    device_map="cpu" # используем CPU, чтобы не забить VRAM, если нужно — поменяйте на "cuda"
+)
+
+print("Загрузка LoRA адаптера...")
+model = PeftModel.from_pretrained(base_model, lora_folder)
+
+print("Слияние весов...")
+model = model.merge_and_unload()
+
+print(f"Сохранение объединенной модели в {output_folder}...")
+model.save_pretrained(output_folder)
+tokenizer.save_pretrained(output_folder)
+print("Готово!")
+
+*****************************
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
+base_model_name = "Qwen/Qwen2.5-1B-Instruct" 
+lora_folder = "/var/www/poker/qwen25-decisions-lora"
+output_folder = "/var/www/poker/qwen25-decisions-merged"
+
+tokenizer = AutoTokenizer.from_pretrained(base_model_name)
+base_model = AutoModelForCausalLM.from_pretrained(
+    base_model_name,
+    torch_dtype=torch.bfloat16,
+    device_map="cpu"
+)
+
+model = PeftModel.from_pretrained(base_model, lora_folder)
+model = model.merge_and_unload()
+
+model.save_pretrained(output_folder)
+tokenizer.save_pretrained(output_folder)
+********************************
+Вариант 2. Сконвертировать только сам LoRA-адаптер в GGUF (без слияния)
+
+Если вы не хотите тратить память на слияние и у вас уже есть базовая Qwen 2.5 в Ollama, в llama.cpp есть отдельный скрипт для адаптеров:
 # python llama.cpp/convert_hf_to_gguf.py ./qwen25-poker-merged --outfile poker-master.gguf --outtype f16
+(Вместо Qwen/Qwen2.5-3B-Instruct укажите локальный путь или имя вашей базовой модели с Hugging Face, чтобы скрипт взял оттуда config.json).
+После этого в Modelfile для Ollama можно подключить базовую модель и получившийся GGUF-адаптер:
+dockerfile
+FROM qwen2.5:3b
+ADAPTER /var/www/poker/qwen25-decisions-lora.gguf
+
+
+# python llama.cpp/convert_lora_to_gguf.py /var/www/poker/qwen25-decisions-lora --outfile /var/www/poker/qwen25-decisions-lora.gguf --base Qwen/Qwen2.5-3B-Instruct
+
+# Modelfile
+FROM /var/www/poker/qwen25-decisions-merged.gguf
+
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ .Response }}<|im_end|>"""
+
+PARAMETER temperature 0.0
+PARAMETER top_p 0.1
+PARAMETER top_k 10
+PARAMETER repeat_penalty 1.15
+PARAMETER num_ctx 4096
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|im_start|>"
+
+SYSTEM "Ты эксперт по Техасскому Холдему (NLH Cash). Ставки перед тобой нет, доступны Чек или Бет. Факты (комбинация, эквити) посчитаны движком. С сильной рукой или сильным дро — Бет, иначе Чек. "В <thought> краткий анализ, в <action> — ровно 'Чек' или 'Бет {размер}bb'. Отвечай строго на русском, без лишних приветствий."
+
+
+SYSTEM "Ты профессиональный и очень внимательный к деталям покерный игрок в Техасский Холдем. Ты принимаешь карты в формате «на столе [карты], у меня [карты]» и выводишь точные вероятности победы и комбинаций строго по заданному шаблону с символами ♠♥♦♣, без лишних приветствий."
+# ollama create gemma-poker-epoch6:26M -f ./Modelfile
+
+
 
 # stage4
 python ./dataset_21_11/stage4/train_lora.py

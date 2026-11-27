@@ -21,7 +21,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from peft import PeftModel, LoraConfig, get_peft_model
-from analyzer import classify_preflop_hand, calculate_equity, build_deck, analyze_preflop, classify_preflop_hand, RANKS, SUITS, RANK_NAMES, Card, evaluate_hand, HAND_STRENGTH_BASE
+from analyzer_old import classify_preflop_hand, calculate_equity, build_deck, analyze_preflop, classify_preflop_hand, RANKS, SUITS, RANK_NAMES, Card, evaluate_hand, HAND_STRENGTH_BASE
 
 # Импортируем наш тренер для генерации данных
 from trainer import generate_training_examples

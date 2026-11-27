@@ -1,6 +1,6 @@
 {
   "pretrain_examples": 18600,
-  "online_examples": 364,
+  "online_examples": 366,
   "batches_trained": 20,
   "preflop_queries": 109,
   "postflop_queries": 58,

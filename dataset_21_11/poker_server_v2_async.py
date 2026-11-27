@@ -537,7 +537,7 @@ class ModelHandler(BaseHTTPRequestHandler):
                 
                 stats["pretrain_examples"] += len(examples)
                 training_buffer.extend(examples)
-                # training_buffer.extend(memory_cache)
+                # training_buffer.extend(memory_cache) 
                 
                 result = train_batch()
 
